@@ -17,4 +17,8 @@ public extension FileManager {
         let bytes = directorySize(dir)
         return ByteCountFormatter.string(fromByteCount: Int64(bytes), countStyle: .file)
     }
+    
+    var documentDirectory: URL {
+        urls(for: .documentDirectory, in: .userDomainMask)[0]
+    }
 }
