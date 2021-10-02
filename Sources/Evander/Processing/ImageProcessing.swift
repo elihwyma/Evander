@@ -26,8 +26,7 @@ final public class EvanderGIF: UIImage {
     public var calculatedDuration: Double?
     public var animatedImages: [UIImage]?
 
-    override convenience public init?(data: Data) {
-        self.init()
+    convenience init?(data: Data, size: CGSize? = nil, scale: CGFloat? = nil) {
         guard let source = CGImageSourceCreateWithData(data as CFData, nil),
         let metadata = CGImageSourceCopyPropertiesAtIndex(source, 0, nil),
         let delayTime = ((metadata as NSDictionary)["{GIF}"] as? NSMutableDictionary)?["DelayTime"] as? Double else { return nil }
@@ -36,7 +35,7 @@ final public class EvanderGIF: UIImage {
         for i in 0 ..< imageCount {
             if let image = CGImageSourceCreateImageAtIndex(source, i, nil) {
                 let tmpImage = UIImage(cgImage: image)
-                if let downscaled = ImageProcessing.downsample(image: tmpImage) {
+                if let downscaled = ImageProcessing.downsample(image: tmpImage, to: size, scale: scale) {
                     images.append(downscaled)
                 } else {
                     images.append(tmpImage)
@@ -44,6 +43,7 @@ final public class EvanderGIF: UIImage {
             }
         }
         let calculatedDuration = Double(imageCount) * delayTime
+        self.init()
         self.animatedImages = images
         self.calculatedDuration = calculatedDuration
     }

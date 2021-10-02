@@ -419,6 +419,62 @@ final public class EvanderNetworking {
         return nil
     }
     
+    public func gif(_ url: String, method: String = "GET", headers: [String: String] = [:], cache: Bool = true, scale: CGFloat? = nil, size: CGSize? = nil, _ completion: ((_ refresh: Bool, _ image: UIImage?) -> Void)?) -> UIImage? {
+        guard let url = URL(string: url) else { return nil }
+        return self.gif(url, method: method, headers: headers, cache: cache, scale: scale, size: size, completion)
+    }
+    
+    public func gif(_ url: URL, method: String = "GET", headers: [String: String] = [:], cache: Bool = true, scale: CGFloat? = nil, size: CGSize? = nil, _ completion: ((_ refresh: Bool, _ image: UIImage?) -> Void)?) -> UIImage? {
+        if String(url.absoluteString.prefix(7)) == "file://" {
+            return nil
+        }
+        var pastData: Data?
+        let encoded = url.absoluteString.toBase64
+        if cache,
+           let image = memoryCache.object(forKey: encoded as NSString) {
+            return image
+        }
+        let path = cacheDirectory.appendingPathComponent("\(encoded).gif")
+        if path.exists {
+            if let data = try? Data(contentsOf: path) {
+                if let image = EvanderGIF(data: data, size: size, scale: scale) {
+                    if cache {
+                        memoryCache.setObject(image, forKey: encoded as NSString)
+                        pastData = data
+                        if Self.skipNetwork(path) {
+                            return image
+                        } else {
+                            completion?(true, image)
+                        }
+                    } else {
+                        return image
+                    }
+                }
+            }
+        }
+        var request = URLRequest(url: url, timeoutInterval: 30)
+        request.httpMethod = method
+        for (key, value) in headers {
+            request.setValue(value, forHTTPHeaderField: key)
+        }
+        let task = URLSession.shared.dataTask(with: request) { [self] data, _, _ -> Void in
+            if let data = data,
+               let image = EvanderGIF(data: data, size: size, scale: scale) {
+                completion?(pastData != data, image)
+                if cache {
+                    memoryCache.setObject(image, forKey: encoded as NSString)
+                    do {
+                        try data.write(to: path, options: .atomic)
+                    } catch {
+                        print("Error saving to \(path.absoluteString) with error: \(error.localizedDescription)")
+                    }
+                }
+            }
+        }
+        task.resume()
+        return nil
+    }
+    
     public func saveCache(_ url: URL, data: Data) {
         if String(url.absoluteString.prefix(7)) == "file://" {
             return
