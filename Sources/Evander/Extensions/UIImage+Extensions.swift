@@ -22,4 +22,12 @@ public extension UIImage {
     func prepareForDisplay() -> UIImage {
         ImageProcessing.downsample(image: self) ?? self
     }
+        
+    convenience init?(systemNameOrNil name: String) {
+        if #available(iOS 13.0, *) {
+            self.init(systemName: name)
+        } else {
+            return nil
+        }
+    }
 }
