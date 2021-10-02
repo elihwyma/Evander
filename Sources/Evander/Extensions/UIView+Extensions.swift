@@ -5,7 +5,7 @@ import UIKit
 
 public extension UIView {
     
-    func fromNib<T: UIView>() -> T {
+    class func fromNib<T: UIView>() -> T {
         Bundle(for: T.self).loadNibNamed(String(describing: T.self), owner: nil, options: nil)![0] as! T
     }
     
