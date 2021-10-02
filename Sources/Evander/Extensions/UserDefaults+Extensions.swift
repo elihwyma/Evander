@@ -3,8 +3,6 @@
 
 import UIKit
 
-import UIKit
-
 public extension UserDefaults {
     
     func set(_ color: UIColor?, forKey defaultName: String) {
