@@ -90,6 +90,26 @@ final public class EvanderNetworking {
         return false
     }
     
+    class public func localDict(url: URL) -> [String: Any]? {
+        let encoded = url.absoluteString.toBase64
+        let path = Self.shared.cacheDirectory.appendingPathComponent("\(encoded).json")
+        if let data = try? Data(contentsOf: path),
+           let dict = try? JSONSerialization.jsonObject(with: data, options: .mutableContainers) as? [String: Any] {
+            return dict
+        }
+        return nil
+    }
+    
+    class public func localArray(urL: URL) -> [[String: Any]]? {
+        let encoded = url.absoluteString.toBase64
+        let path = Self.shared.cacheDirectory.appendingPathComponent("\(encoded).json")
+        if let data = try? Data(contentsOf: path),
+           let dict = try? JSONSerialization.jsonObject(with: data, options: .mutableContainers) as? [[String: Any]] {
+            return dict
+        }
+        return nil
+    }
+    
     class public func dict(request: URLRequest, cache: Bool = false, _ completion: @escaping ((_ success: Bool, _ dict: [String: Any]?) -> Void)) {
         var pastData: Data?
         if cache {
