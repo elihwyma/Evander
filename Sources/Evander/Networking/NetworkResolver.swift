@@ -100,7 +100,7 @@ final public class EvanderNetworking {
         return nil
     }
     
-    class public func localArray(urL: URL) -> [[String: Any]]? {
+    class public func localArray(url: URL) -> [[String: Any]]? {
         let encoded = url.absoluteString.toBase64
         let path = Self.shared.cacheDirectory.appendingPathComponent("\(encoded).json")
         if let data = try? Data(contentsOf: path),
