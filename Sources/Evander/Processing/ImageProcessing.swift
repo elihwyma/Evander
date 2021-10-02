@@ -11,13 +11,33 @@ final public class ImageProcessing {
         let imageSourceOptions = [kCGImageSourceShouldCache: false] as CFDictionary
         guard let data = image.pngData() as CFData?,
               let imageSource = CGImageSourceCreateWithData(data, imageSourceOptions) else { return nil }
+        return downsample(source: imageSource, size: size, scale: scale)
+    }
+    
+    public class func downsample(url: URL, to pointSize: CGSize? = nil, scale: CGFloat? = nil) -> UIImage? {
+        let imageSourceOptions = [kCGImageSourceShouldCache: false] as CFDictionary
+        guard let imageSource = CGImageSourceCreateWithURL(url as CFURL, imageSourceOptions),
+              let size = pointSize ?? getSize(from: imageSource) else {
+            return nil
+        }
+        return downsample(source: imageSource, size: size, scale: scale)
+    }
+    
+    private class func downsample(source: CGImageSource, size: CGSize, scale: CGFloat?) -> UIImage? {
         let maxDimentionInPixels = max(size.width, size.height) * (scale ?? UIScreen.main.scale)
         let downsampledOptions = [kCGImageSourceCreateThumbnailFromImageAlways: true,
           kCGImageSourceShouldCacheImmediately: true,
           kCGImageSourceCreateThumbnailWithTransform: true,
           kCGImageSourceThumbnailMaxPixelSize: maxDimentionInPixels] as CFDictionary
-        guard let downScaledImage = CGImageSourceCreateThumbnailAtIndex(imageSource, 0, downsampledOptions) else { return nil }
+        guard let downScaledImage = CGImageSourceCreateThumbnailAtIndex(source, 0, downsampledOptions) else { return nil }
         return UIImage(cgImage: downScaledImage)
+    }
+    
+    private class func getSize(from source: CGImageSource) -> CGSize? {
+        guard let metadata = CGImageSourceCopyPropertiesAtIndex(source, 0, nil),
+              let height = (metadata as NSDictionary)["PixelHeight"] as? Double,
+              let width = (metadata as NSDictionary)["PixelWidth"] as? Double else { return nil }
+        return CGSize(width: width, height: height)
     }
     
 }

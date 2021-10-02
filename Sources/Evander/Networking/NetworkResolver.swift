@@ -394,22 +394,17 @@ final public class EvanderNetworking {
         }
         let path = cacheDirectory.appendingPathComponent("\(encoded).png")
         if path.exists {
-            if let data = try? Data(contentsOf: path) {
-                if var image = (scale != nil) ? UIImage(data: data, scale: scale!) : UIImage(data: data) {
-                    if let downscaled = ImageProcessing.downsample(image: image, to: size, scale: scale) {
-                        image = downscaled
-                    }
-                    if cache {
-                        memoryCache.setObject(image, forKey: encoded as NSString)
-                        pastData = data
-                        if Self.skipNetwork(path) {
-                            return image
-                        } else {
-                            completion?(true, image)
-                        }
-                    } else {
+            if let image = ImageProcessing.downsample(url: path, to: size, scale: scale) {
+                if cache {
+                    memoryCache.setObject(image, forKey: encoded as NSString)
+                    pastData = image.pngData()
+                    if Self.skipNetwork(path) {
                         return image
+                    } else {
+                        completion?(true, image)
                     }
+                } else {
+                    return image
                 }
             }
         }
@@ -424,7 +419,7 @@ final public class EvanderNetworking {
                 if let downscaled = ImageProcessing.downsample(image: image, to: size, scale: scale) {
                     image = downscaled
                 }
-                completion?(pastData != data, image)
+                completion?(pastData != image.pngData(), image)
                 if cache {
                     memoryCache.setObject(image, forKey: encoded as NSString)
                     do {
@@ -517,11 +512,8 @@ final public class EvanderNetworking {
         if let memory = memoryCache.object(forKey: encoded as NSString) {
             return (!Self.skipNetwork(path), memory)
         }
-        if let data = try? Data(contentsOf: path) {
-            if var image = (scale != nil) ? UIImage(data: data, scale: scale!) : UIImage(data: data) {
-                if let downscaled = ImageProcessing.downsample(image: image, to: size, scale: scale) {
-                    image = downscaled
-                }
+        if path.exists {
+            if let image = ImageProcessing.downsample(url: path, to: size, scale: scale) {
                 return (!Self.skipNetwork(path), image)
             }
         }
