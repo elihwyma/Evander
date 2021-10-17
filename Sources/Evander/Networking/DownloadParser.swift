@@ -17,10 +17,10 @@ final public class EvanderDownloader: NSObject {
     private var request: URLRequest
     private var task: URLSessionDownloadTask?
     private let queue = OperationQueue()
-    private var progress = Progress()
+    private var progress = DownloadProgress()
     private var killed = false
     
-    public var progressCallback: ((_ progress: Progress) -> Void)? {
+    public var progressCallback: ((_ progress: DownloadProgress) -> Void)? {
         didSet {
             container?.progressCallback = progressCallback
         }
@@ -209,9 +209,9 @@ final public class EvanderDownloadDelegate: NSObject, URLSessionDownloadDelegate
 
 public class EvanderDownloadContainer {
     public var url: URL
-    public var progress = Progress()
+    public var progress = DownloadProgress()
     public var killed = false
-    public var progressCallback: ((_ progress: Progress) -> Void)?
+    public var progressCallback: ((_ progress: DownloadProgress) -> Void)?
     public var didFinishCallback: ((_ status: Int, _ url: URL) -> Void)?
     public var errorCallback: ((_ status: Int, _ error: Error?, _ url: URL?) -> Void)?
     public var waitingCallback: ((_ message: String) -> Void)?
@@ -223,7 +223,7 @@ public class EvanderDownloadContainer {
     }
 }
 
-public struct Progress {
+public struct DownloadProgress {
     public var period: Int64 = 0
     public var total: Int64 = 0
     public var expected: Int64 = 0
