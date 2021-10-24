@@ -89,7 +89,7 @@ final public class EvanderNetworking {
         return false
     }
 
-    class public func checkCache<T: Any>(for url: URL, type: T) -> T? {
+    class public func checkCache<T: Any>(for url: URL, type: T.Type) -> T? {
         let encoded = url.absoluteString.toBase64
         let path = Self.shared.cacheDirectory.appendingPathComponent("\(encoded).json")
         if let data = try? Data(contentsOf: path),
@@ -101,7 +101,7 @@ final public class EvanderNetworking {
     
     public typealias Response<T: Any> = ((Bool, Int?, Error?, T?) -> Void)
     
-    class public func request<T: Any>(request: URLRequest, type: T, cache: CacheConfig = .init(), _ completion: @escaping Response<T>) {
+    class public func request<T: Any>(request: URLRequest, type: T.Type, cache: CacheConfig = .init(), _ completion: @escaping Response<T>) {
         var cachedData: Data?
         guard let url = request.url else { return completion(false, nil, nil, nil) }
         let encoded = url.absoluteString.toBase64
@@ -153,13 +153,13 @@ final public class EvanderNetworking {
         }.resume()
     }
     
-    class public func request<T: Any>(url: String?, type: T, method: String = "GET", headers: [String: String] = [:], json: [String: AnyHashable] = [:], cache: CacheConfig = .init(), _ completion: @escaping Response<T>) {
+    class public func request<T: Any>(url: String?, type: T.Type, method: String = "GET", headers: [String: String] = [:], json: [String: AnyHashable] = [:], cache: CacheConfig = .init(), _ completion: @escaping Response<T>) {
         guard let _url = url,
               let url = URL(string: _url) else { return completion(false, nil, nil, nil) }
         request(url: url, type: type, method: method, headers: headers, json: json, cache: cache, completion)
     }
     
-    class public func request<T: Any>(url: URL, type: T, method: String = "GET", headers: [String: String] = [:], json: [String: AnyHashable] = [:], cache: CacheConfig = .init(), _ completion: @escaping Response<T>) {
+    class public func request<T: Any>(url: URL, type: T.Type, method: String = "GET", headers: [String: String] = [:], json: [String: AnyHashable] = [:], cache: CacheConfig = .init(), _ completion: @escaping Response<T>) {
         var request = URLRequest(url: url, timeoutInterval: 30)
         request.httpMethod = method
         for (key, value) in headers {
