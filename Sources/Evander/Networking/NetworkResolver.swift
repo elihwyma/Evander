@@ -71,9 +71,13 @@ final public class EvanderNetworking {
     }
     
     public struct CacheConfig {
-        public var localCache: Bool = true
-        public var skipNetwork: Bool = false
-        public init() {}
+        public var localCache: Bool
+        public var skipNetwork: Bool
+        
+        public init(localCache: Bool = true, skipNetwork: Bool = false) {
+            self.localCache = localCache
+            self.skipNetwork = skipNetwork
+        }
     }
 
     class private func skipNetwork(_ url: URL) -> Bool {
