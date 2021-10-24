@@ -204,6 +204,7 @@ final public class EvanderNetworking {
             return nil
         }
         var pastData: Data?
+        var returnImage: UIImage?
         let encoded = url.absoluteString.toBase64
         if cache,
            let image = memoryCache.object(forKey: encoded as NSString) {
@@ -218,7 +219,7 @@ final public class EvanderNetworking {
                     if Self.skipNetwork(path) {
                         return image
                     } else {
-                        completion?(true, image)
+                        returnImage = image
                     }
                 } else {
                     return image
@@ -248,7 +249,7 @@ final public class EvanderNetworking {
             }
         }
         task.resume()
-        return nil
+        return returnImage
     }
     
     public func gif(_ url: String, method: String = "GET", headers: [String: String] = [:], cache: Bool = true, scale: CGFloat? = nil, size: CGSize? = nil, _ completion: ((_ refresh: Bool, _ image: UIImage?) -> Void)?) -> UIImage? {
@@ -261,6 +262,7 @@ final public class EvanderNetworking {
             return nil
         }
         var pastData: Data?
+        var returnImage: UIImage?
         let encoded = url.absoluteString.toBase64
         if cache,
            let image = memoryCache.object(forKey: encoded as NSString) {
@@ -276,7 +278,7 @@ final public class EvanderNetworking {
                         if Self.skipNetwork(path) {
                             return image
                         } else {
-                            completion?(true, image)
+                            returnImage = image
                         }
                     } else {
                         return image
@@ -304,7 +306,7 @@ final public class EvanderNetworking {
             }
         }
         task.resume()
-        return nil
+        return returnImage
     }
     
     public func saveCache(_ url: URL, data: Data) {
