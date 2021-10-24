@@ -30,13 +30,6 @@ final public class EvanderNetworking {
     }
     
     public func setupCache() {
-        if !cacheDirectory.dirExists {
-            do {
-                try FileManager.default.createDirectory(atPath: cacheDirectory.path, withIntermediateDirectories: true, attributes: nil)
-            } catch {
-                print("Failed to create cache directory \(error.localizedDescription)")
-            }
-        }
         if !downloadCache.dirExists {
             do {
                 try FileManager.default.createDirectory(atPath: downloadCache.path, withIntermediateDirectories: true, attributes: nil)
@@ -76,6 +69,12 @@ final public class EvanderNetworking {
     init() {
         setupCache()
     }
+    
+    public struct CacheConfig {
+        public var localCache: Bool = true
+        public var skipNetwork: Bool = false
+        public init() {}
+    }
 
     class private func skipNetwork(_ url: URL) -> Bool {
         if let attr = try? FileManager.default.attributesOfItem(atPath: url.path),
@@ -89,209 +88,89 @@ final public class EvanderNetworking {
         }
         return false
     }
-    
-    class public func localDict(url: URL) -> [String: Any]? {
-        let encoded = url.absoluteString.toBase64
-        let path = Self.shared.cacheDirectory.appendingPathComponent("\(encoded).json")
-        if let data = try? Data(contentsOf: path),
-           let dict = try? JSONSerialization.jsonObject(with: data, options: .mutableContainers) as? [String: Any] {
-            return dict
-        }
-        return nil
-    }
-    
-    class public func localArray(url: URL) -> [[String: Any]]? {
-        let encoded = url.absoluteString.toBase64
-        let path = Self.shared.cacheDirectory.appendingPathComponent("\(encoded).json")
-        if let data = try? Data(contentsOf: path),
-           let dict = try? JSONSerialization.jsonObject(with: data, options: .mutableContainers) as? [[String: Any]] {
-            return dict
-        }
-        return nil
-    }
-    
-    class public func dict(request: URLRequest, cache: Bool = false, _ completion: @escaping ((_ success: Bool, _ dict: [String: Any]?) -> Void)) {
-        var pastData: Data?
-        if cache {
-            if let url = request.url {
-                let encoded = url.absoluteString.toBase64
-                let path = Self.shared.cacheDirectory.appendingPathComponent("\(encoded).json")
-                if let data = try? Data(contentsOf: path),
-                   let dict = try? JSONSerialization.jsonObject(with: data, options: .mutableContainers) as? [String: Any] {
-                    if skipNetwork(path) {
-                        return completion(true, dict)
-                    } else {
-                        pastData = data
-                        completion(true, dict)
-                    }
-                }
-            }
-        }
-        Self.request(request) { success, data -> Void in
-            guard success,
-                  let data = data else { return completion(false, nil) }
-            if cache {
-                if let url = request.url {
-                    let encoded = url.absoluteString.toBase64
-                    let path = Self.shared.cacheDirectory.appendingPathComponent("\(encoded).json")
-                    try? data.write(to: path)
-                }
-            }
-            if pastData == data { return }
-            do {
-                let dict = try JSONSerialization.jsonObject(with: data, options: .mutableContainers) as? [String: Any] ?? [String: Any]()
-                return completion(true, dict)
-            } catch {}
-            return completion(false, nil)
-        }
-    }
-    
-    class public func dict(url: String?, method: String = "GET", headers: [String: String] = [:], json: [String: AnyHashable] = [:], cache: Bool = false, _ completion: @escaping ((_ success: Bool, _ dict: [String: Any]?) -> Void)) {
-        guard let surl = url,
-              let url = URL(string: surl) else { return completion(false, nil) }
-        Self.dict(url: url, method: method, headers: headers, json: json, cache: cache) { success, dict -> Void in
-            completion(success, dict)
-        }
-    }
-    
-    class public func dict(url: URL, method: String = "GET", headers: [String: String] = [:], json: [String: AnyHashable] = [:], cache: Bool = false, _ completion: @escaping ((_ success: Bool, _ dict: [String: Any]?) -> Void)) {
-        var pastData: Data?
-        if cache {
-            let encoded = url.absoluteString.toBase64
-            let path = Self.shared.cacheDirectory.appendingPathComponent("\(encoded).json")
-            if let data = try? Data(contentsOf: path),
-               let dict = try? JSONSerialization.jsonObject(with: data, options: .mutableContainers) as? [String: Any] {
-                if skipNetwork(path) {
-                    return completion(true, dict)
-                } else {
-                    pastData = data
-                    completion(true, dict)
-                }
-            }
-        }
 
-        Self.request(url: url, method: method, headers: headers, json: json) { success, data in
-            guard success,
-                  let data = data else { return completion(false, nil) }
-            if cache {
-                let encoded = url.absoluteString.toBase64
-                let path = Self.shared.cacheDirectory.appendingPathComponent("\(encoded).json")
-                try? data.write(to: path)
-            }
-            if pastData == data { return }
-            do {
-                let dict = try JSONSerialization.jsonObject(with: data, options: .mutableContainers) as? [String: Any] ?? [String: Any]()
-                return completion(true, dict)
-            } catch {}
-            return completion(false, nil)
+    class public func checkCache<T: Any>(for url: URL, type: T) -> T? {
+        let encoded = url.absoluteString.toBase64
+        let path = Self.shared.cacheDirectory.appendingPathComponent("\(encoded).json")
+        if let data = try? Data(contentsOf: path),
+           let dict = try? JSONSerialization.jsonObject(with: data, options: .mutableContainers) as? T {
+            return dict
         }
+        return nil
     }
     
-    class public func array(request: URLRequest, cache: Bool = false, _ completion: @escaping ((_ success: Bool, _ array: [[String: Any]]?) -> Void)) {
-        var pastData: Data?
-        if cache {
-            if let url = request.url {
-                let encoded = url.absoluteString.toBase64
-                let path = Self.shared.cacheDirectory.appendingPathComponent("\(encoded).json")
-                if let data = try? Data(contentsOf: path),
-                   let arr = try? JSONSerialization.jsonObject(with: data, options: .mutableContainers) as? [[String: Any]] {
-                    if skipNetwork(path) {
-                        return completion(true, arr)
+    public typealias Response<T: Any> = ((Bool, Int?, Error?, T?) -> Void)
+    
+    class public func request<T: Any>(request: URLRequest, type: T, cache: CacheConfig = .init(), _ completion: @escaping Response<T>) {
+        var cachedData: Data?
+        guard let url = request.url else { return completion(false, nil, nil, nil) }
+        let encoded = url.absoluteString.toBase64
+        let path = Self.shared.cacheDirectory.appendingPathComponent("\(encoded).json")
+        
+        if cache.localCache {
+            if let data = try? Data(contentsOf: path) {
+                if T.self == Data.self {
+                    if cache.skipNetwork && skipNetwork(path) {
+                        return completion(true, nil, nil, data as? T)
                     } else {
-                        pastData = data
-                        completion(true, arr)
+                        cachedData = data
+                        completion(true, nil, nil, data as? T)
                     }
-                }
-            }
-        }
-        Self.request(request) { success, data in
-            guard success,
-                  let data = data else { return completion(false, nil) }
-            if cache {
-                if let url = request.url {
-                    let encoded = url.absoluteString.toBase64
-                    let path = Self.shared.cacheDirectory.appendingPathComponent("\(encoded).json")
-                    try? data.write(to: path)
-                }
-            }
-            if pastData == data { return }
-            do {
-                let arr = try JSONSerialization.jsonObject(with: data, options: .mutableContainers) as? [[String: Any]] ?? [[String: Any]]()
-                return completion(true, arr)
-            } catch {}
-            return completion(false, nil)
-        }
-    }
-    
-    class public func array(url: String?, method: String = "GET", headers: [String: String] = [:], json: [String: AnyHashable] = [:], cache: Bool = false, _ completion: @escaping ((_ success: Bool, _ array: [[String: Any]]?) -> Void)) {
-        guard let surl = url,
-              let url = URL(string: surl) else { return completion(false, nil) }
-        Self.array(url: url, method: method, headers: headers, json: json, cache: cache) { success, array -> Void in
-            return completion(success, array)
-        }
-    }
-    
-    class public func array(url: URL, method: String = "GET", headers: [String: String] = [:], json: [String: AnyHashable] = [:], cache: Bool = false, _ completion: @escaping ((_ success: Bool, _ array: [[String: Any]]?) -> Void)) {
-        var pastData: Data?
-        if cache {
-            let encoded = url.absoluteString.toBase64
-            let path = Self.shared.cacheDirectory.appendingPathComponent("\(encoded).json")
-            if let data = try? Data(contentsOf: path),
-               let arr = try? JSONSerialization.jsonObject(with: data, options: .mutableContainers) as? [[String: Any]] {
-                if skipNetwork(path) {
-                    return completion(true, arr)
                 } else {
-                    pastData = data
-                    completion(true, arr)
-                }
-            }
-        }
-        Self.request(url: url, method: method, headers: headers, json: json) { success, data in
-            guard success,
-                  let data = data else { return completion(false, nil) }
-            if cache {
-                let encoded = url.absoluteString.toBase64
-                let path = Self.shared.cacheDirectory.appendingPathComponent("\(encoded).json")
-                try? data.write(to: path)
-            }
-            if pastData == data { return }
-            do {
-                let arr = try JSONSerialization.jsonObject(with: data, options: .mutableContainers) as? [[String: Any]] ?? [[String: Any]]()
-                return completion(true, arr)
-            } catch {}
-            return completion(false, nil)
-        }
-    }
-    
-    class public func data(request: URLRequest, cache: Bool = false, _ completion: @escaping ((_ success: Bool, _ data: Data?) -> Void)) {
-        var pastData: Data?
-        if cache {
-            if let url = request.url {
-                let encoded = url.absoluteString.toBase64
-                let path = Self.shared.cacheDirectory.appendingPathComponent("\(encoded).json")
-                if let data = try? Data(contentsOf: path) {
-                    if skipNetwork(path) {
-                        return completion(true, data)
-                    } else {
-                        pastData = data
-                        completion(true, data)
+                    if let decoded = try? JSONSerialization.jsonObject(with: data, options: .mutableContainers) as? T {
+                        if cache.skipNetwork && skipNetwork(path) {
+                            return completion(true, nil, nil, decoded)
+                        } else {
+                            cachedData = data
+                            completion(true, nil, nil, decoded)
+                        }
                     }
                 }
             }
         }
-        Self.request(request) { success, data in
-            guard success,
-                  let data = data else { return completion(false, nil) }
-            if cache {
-                if let url = request.url {
-                    let encoded = url.absoluteString.toBase64
-                    let path = Self.shared.cacheDirectory.appendingPathComponent("\(encoded).json")
-                    try? data.write(to: path)
+        URLSession.shared.dataTask(with: request) { data, response, error -> Void in
+            let statusCode = (response as? HTTPURLResponse)?.statusCode
+            var returnData: T?
+            var success: Bool = false
+            if let data = data {
+                if T.self == Data.self {
+                    returnData = data as? T
+                    success = true
+                    if cache.localCache {
+                        try? data.write(to: path, options: .atomic)
+                    }
+                    if cachedData == data { return }
+                } else if let decoded = try? JSONSerialization.jsonObject(with: data, options: .mutableContainers) as? T {
+                    returnData = decoded
+                    success = true
+                    if cache.localCache {
+                        try? data.write(to: path, options: .atomic)
+                    }
+                    if cachedData == data { return }
                 }
             }
-            if pastData == data { return }
-            completion(true, data)
+            return completion(success, statusCode, error, returnData)
+        }.resume()
+    }
+    
+    class public func request<T: Any>(url: String?, type: T, method: String = "GET", headers: [String: String] = [:], json: [String: AnyHashable] = [:], cache: CacheConfig = .init(), _ completion: @escaping Response<T>) {
+        guard let _url = url,
+              let url = URL(string: _url) else { return completion(false, nil, nil, nil) }
+        request(url: url, type: type, method: method, headers: headers, json: json, cache: cache, completion)
+    }
+    
+    class public func request<T: Any>(url: URL, type: T, method: String = "GET", headers: [String: String] = [:], json: [String: AnyHashable] = [:], cache: CacheConfig = .init(), _ completion: @escaping Response<T>) {
+        var request = URLRequest(url: url, timeoutInterval: 30)
+        request.httpMethod = method
+        for (key, value) in headers {
+            request.setValue(value, forHTTPHeaderField: key)
         }
+        if !json.isEmpty,
+           let jsonData = try? JSONSerialization.data(withJSONObject: json, options: .prettyPrinted) {
+            request.httpBody = jsonData
+            request.setValue("application/json;charset=utf-8", forHTTPHeaderField: "Content-Type")
+        }
+        Self.request(request: request, type: type, cache: cache, completion)
     }
     
     class public func head(url: String?, _ completion: @escaping ((_ success: Bool) -> Void)) {
@@ -309,77 +188,11 @@ final public class EvanderNetworking {
         }
         task.resume()
     }
-    
-    class public func data(url: String?, method: String = "GET", headers: [String: String] = [:], json: [String: AnyHashable] = [:], cache: Bool = false, _ completion: @escaping ((_ success: Bool, _ data: Data?) -> Void)) {
+
+    public func image(_ url: String?, method: String = "GET", headers: [String: String] = [:], cache: Bool = true, scale: CGFloat? = nil, size: CGSize? = nil, _ completion: ((_ refresh: Bool, _ image: UIImage?) -> Void)?) -> UIImage? {
         guard let surl = url,
-              let url = URL(string: surl) else { return completion(false, nil) }
-        Self.data(url: url, method: method, headers: headers, json: json, cache: cache) { success, data -> Void in
-            return completion(success, data)
-        }
-    }
-    
-    class public func data(url: URL, method: String = "GET", headers: [String: String] = [:], json: [String: AnyHashable] = [:], cache: Bool = false, _ completion: @escaping ((_ success: Bool, _ data: Data?) -> Void)) {
-        var pastData: Data?
-        if cache {
-            let encoded = url.absoluteString.toBase64
-            let path = Self.shared.cacheDirectory.appendingPathComponent("\(encoded).json")
-            if let data = try? Data(contentsOf: path) {
-                if skipNetwork(path) {
-                    return completion(true, data)
-                } else {
-                    pastData = data
-                    completion(true, data)
-                }
-            }
-        }
-        Self.request(url: url, method: method, headers: headers, json: json) { success, data in
-            guard success,
-                  let data = data else { return completion(false, nil) }
-            if cache {
-                let encoded = url.absoluteString.toBase64
-                let path = Self.shared.cacheDirectory.appendingPathComponent("\(encoded).json")
-                try? data.write(to: path)
-            }
-            if pastData == data { return }
-            completion(true, data)
-        }
-    }
-    
-    class private func request(url: URL, method: String = "GET", headers: [String: String] = [:], json: [String: AnyHashable] = [:], _ completion: @escaping ((_ success: Bool, _ data: Data?) -> Void)) {
-        var request = URLRequest(url: url, timeoutInterval: 30)
-        request.httpMethod = method
-        for (key, value) in headers {
-            request.setValue(value, forHTTPHeaderField: key)
-        }
-        if !json.isEmpty,
-           let jsonData = try? JSONSerialization.data(withJSONObject: json, options: .prettyPrinted) {
-            request.httpBody = jsonData
-            request.setValue("application/json;charset=utf-8", forHTTPHeaderField: "Content-Type")
-        }
-        let task = URLSession.shared.dataTask(with: request) { data, _, _ -> Void in
-            if let data = data {
-                return completion(true, data)
-            }
-            return completion(false, nil)
-        }
-        task.resume()
-    }
-    
-    class private func request(_ request: URLRequest, _ completion: @escaping ((_ success: Bool, _ data: Data?) -> Void)) {
-        let task = URLSession.shared.dataTask(with: request) { data, _, _ -> Void in
-            if let data = data {
-                return completion(true, data)
-            }
-            return completion(false, nil)
-        }
-        task.resume()
-    }
-    
-    public func image(_ url: String, method: String = "GET", headers: [String: String] = [:], cache: Bool = true, scale: CGFloat? = nil, size: CGSize? = nil, _ completion: ((_ refresh: Bool, _ image: UIImage?) -> Void)?) -> UIImage? {
-        guard let url = URL(string: url) else { return nil }
-        return self.image(url, method: method, headers: headers, cache: cache, scale: scale, size: size) { refresh, image in
-            completion?(refresh, image)
-        }
+              let url = URL(string: surl) else { return nil }
+        return image(url, method: method, headers: headers, cache: cache, scale: scale, size: size, completion)
     }
     
     public func image(_ url: URL, method: String = "GET", headers: [String: String] = [:], cache: Bool = true, scale: CGFloat? = nil, size: CGSize? = nil, _ completion: ((_ refresh: Bool, _ image: UIImage?) -> Void)?) -> UIImage? {
