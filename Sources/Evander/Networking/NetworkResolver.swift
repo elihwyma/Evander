@@ -203,6 +203,10 @@ final public class EvanderNetworking {
         if String(url.absoluteString.prefix(7)) == "file://" {
             return nil
         }
+        var size = size
+        if size?.height == 0 || size?.width == 0 {
+            size = nil
+        }
         var pastData: Data?
         var returnImage: UIImage?
         let encoded = url.absoluteString.toBase64
@@ -260,6 +264,10 @@ final public class EvanderNetworking {
     public func gif(_ url: URL, method: String = "GET", headers: [String: String] = [:], cache: Bool = true, scale: CGFloat? = nil, size: CGSize? = nil, _ completion: ((_ refresh: Bool, _ image: UIImage?) -> Void)?) -> UIImage? {
         if String(url.absoluteString.prefix(7)) == "file://" {
             return nil
+        }
+        var size = size
+        if size?.height == 0 || size?.width == 0 {
+            size = nil
         }
         var pastData: Data?
         var returnImage: UIImage?
