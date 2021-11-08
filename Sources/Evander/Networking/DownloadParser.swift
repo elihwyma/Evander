@@ -116,7 +116,7 @@ final public class EvanderDownloadDelegate: NSObject, URLSessionDownloadDelegate
             return
         }
         let filename = location.lastPathComponent,
-            destination = EvanderNetworking.shared.downloadCache.appendingPathComponent(filename)
+            destination = EvanderNetworking.downloadCache.appendingPathComponent(filename)
         do {
             if FileManager.default.fileExists(atPath: destination.path) {
                 try FileManager.default.removeItem(at: destination)

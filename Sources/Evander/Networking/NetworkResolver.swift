@@ -5,31 +5,29 @@
 import UIKit
 
 final public class EvanderNetworking {
-    
-    static public let shared = EvanderNetworking()
-    
+
     // swiftlint:disable force_cast
-    lazy public var cacheDirectory: URL = {
+    public static var cacheDirectory: URL = {
         FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
             .appendingPathComponent((Bundle.main.infoDictionary?[kCFBundleNameKey as String] as! String).replacingOccurrences(of: " ", with: ""))
     }()
     // swiftlint:enable force_cast
     
-    lazy public var downloadCache: URL = {
+    public static var downloadCache: URL = {
         cacheDirectory.appendingPathComponent("DownloadCache")
     }()
     
-    public var memoryCache = NSCache<NSString, UIImage>()
+    public static var memoryCache = NSCache<NSString, UIImage>()
 
     
-    public func clearCache() {
+    public class func clearCache() {
         if cacheDirectory.dirExists {
             try? FileManager.default.removeItem(at: cacheDirectory)
         }
         setupCache()
     }
     
-    public func setupCache() {
+    public class func setupCache() {
         if !downloadCache.dirExists {
             do {
                 try FileManager.default.createDirectory(atPath: downloadCache.path, withIntermediateDirectories: true, attributes: nil)
@@ -65,11 +63,7 @@ final public class EvanderNetworking {
             }
         }
     }
- 
-    init() {
-        setupCache()
-    }
-    
+
     public struct CacheConfig {
         public var localCache: Bool
         public var skipNetwork: Bool
@@ -95,7 +89,7 @@ final public class EvanderNetworking {
 
     class public func checkCache<T: Any>(for url: URL, type: T.Type) -> T? {
         let encoded = url.absoluteString.toBase64
-        let path = Self.shared.cacheDirectory.appendingPathComponent("\(encoded).json")
+        let path = Self.cacheDirectory.appendingPathComponent("\(encoded).json")
         if let data = try? Data(contentsOf: path),
            let dict = try? JSONSerialization.jsonObject(with: data, options: .mutableContainers) as? T {
             return dict
@@ -109,7 +103,7 @@ final public class EvanderNetworking {
         var cachedData: Data?
         guard let url = request.url else { return completion(false, nil, nil, nil) }
         let encoded = url.absoluteString.toBase64
-        let path = Self.shared.cacheDirectory.appendingPathComponent("\(encoded).json")
+        let path = Self.cacheDirectory.appendingPathComponent("\(encoded).json")
         
         if cache.localCache {
             if let data = try? Data(contentsOf: path) {
@@ -193,13 +187,13 @@ final public class EvanderNetworking {
         task.resume()
     }
 
-    public func image(_ url: String?, method: String = "GET", headers: [String: String] = [:], cache: Bool = true, scale: CGFloat? = nil, size: CGSize? = nil, _ completion: ((_ refresh: Bool, _ image: UIImage?) -> Void)?) -> UIImage? {
+    public class func image(_ url: String?, method: String = "GET", headers: [String: String] = [:], cache: Bool = true, scale: CGFloat? = nil, size: CGSize? = nil, _ completion: ((_ refresh: Bool, _ image: UIImage?) -> Void)?) -> UIImage? {
         guard let surl = url,
               let url = URL(string: surl) else { return nil }
         return image(url, method: method, headers: headers, cache: cache, scale: scale, size: size, completion)
     }
     
-    public func image(_ url: URL, method: String = "GET", headers: [String: String] = [:], cache: Bool = true, scale: CGFloat? = nil, size: CGSize? = nil, _ completion: ((_ refresh: Bool, _ image: UIImage?) -> Void)?) -> UIImage? {
+    public class func image(_ url: URL, method: String = "GET", headers: [String: String] = [:], cache: Bool = true, scale: CGFloat? = nil, size: CGSize? = nil, _ completion: ((_ refresh: Bool, _ image: UIImage?) -> Void)?) -> UIImage? {
         if String(url.absoluteString.prefix(7)) == "file://" {
             return nil
         }
@@ -256,12 +250,12 @@ final public class EvanderNetworking {
         return returnImage
     }
     
-    public func gif(_ url: String, method: String = "GET", headers: [String: String] = [:], cache: Bool = true, scale: CGFloat? = nil, size: CGSize? = nil, _ completion: ((_ refresh: Bool, _ image: UIImage?) -> Void)?) -> UIImage? {
+    public class func gif(_ url: String, method: String = "GET", headers: [String: String] = [:], cache: Bool = true, scale: CGFloat? = nil, size: CGSize? = nil, _ completion: ((_ refresh: Bool, _ image: UIImage?) -> Void)?) -> UIImage? {
         guard let url = URL(string: url) else { return nil }
         return self.gif(url, method: method, headers: headers, cache: cache, scale: scale, size: size, completion)
     }
     
-    public func gif(_ url: URL, method: String = "GET", headers: [String: String] = [:], cache: Bool = true, scale: CGFloat? = nil, size: CGSize? = nil, _ completion: ((_ refresh: Bool, _ image: UIImage?) -> Void)?) -> UIImage? {
+    public class func gif(_ url: URL, method: String = "GET", headers: [String: String] = [:], cache: Bool = true, scale: CGFloat? = nil, size: CGSize? = nil, _ completion: ((_ refresh: Bool, _ image: UIImage?) -> Void)?) -> UIImage? {
         if String(url.absoluteString.prefix(7)) == "file://" {
             return nil
         }
@@ -317,7 +311,7 @@ final public class EvanderNetworking {
         return returnImage
     }
     
-    public func saveCache(_ url: URL, data: Data) {
+    public class func saveCache(_ url: URL, data: Data) {
         if String(url.absoluteString.prefix(7)) == "file://" {
             return
         }
@@ -330,7 +324,7 @@ final public class EvanderNetworking {
         }
     }
     
-    public func imageCache(_ url: URL, scale: CGFloat? = nil, size: CGSize? = nil) -> (Bool, UIImage?) {
+    public class func imageCache(_ url: URL, scale: CGFloat? = nil, size: CGSize? = nil) -> (Bool, UIImage?) {
         if String(url.absoluteString.prefix(7)) == "file://" {
             return (true, nil)
         }

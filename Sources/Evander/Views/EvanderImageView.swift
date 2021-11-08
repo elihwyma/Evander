@@ -28,7 +28,7 @@ public class EvanderImageView: UIImageView {
             return
         }
         guard let url = url else { image = nil; return }
-        image = EvanderNetworking.shared.image(url, cache: cache, size: size, { [weak self] reload, image in
+        image = EvanderNetworking.image(url, cache: cache, size: size, { [weak self] reload, image in
             if self?.url == url,
                   reload,
                   let image = image {
