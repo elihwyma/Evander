@@ -151,19 +151,20 @@ final public class EvanderNetworking {
         }.resume()
     }
     
-    class public func request<T: Any>(url: String?, type: T.Type, method: String = "GET", headers: [String: String] = [:], json: [String: AnyHashable] = [:], cache: CacheConfig = .init(), _ completion: @escaping Response<T>) {
+    class public func request<T: Any>(url: String?, type: T.Type, method: String = "GET", headers: [String: String] = [:], json: [String: AnyHashable]? = nil, cache: CacheConfig = .init(), _ completion: @escaping Response<T>) {
         guard let _url = url,
               let url = URL(string: _url) else { return completion(false, nil, nil, nil) }
         request(url: url, type: type, method: method, headers: headers, json: json, cache: cache, completion)
     }
     
-    class public func request<T: Any>(url: URL, type: T.Type, method: String = "GET", headers: [String: String] = [:], json: [String: AnyHashable] = [:], cache: CacheConfig = .init(), _ completion: @escaping Response<T>) {
+    class public func request<T: Any>(url: URL, type: T.Type, method: String = "GET", headers: [String: String] = [:], json: [String: AnyHashable]? = nil, cache: CacheConfig = .init(), _ completion: @escaping Response<T>) {
         var request = URLRequest(url: url, timeoutInterval: 30)
         request.httpMethod = method
         for (key, value) in headers {
             request.setValue(value, forHTTPHeaderField: key)
         }
-        if !json.isEmpty,
+        if let json = json,
+           !json.isEmpty,
            let jsonData = try? JSONSerialization.data(withJSONObject: json, options: .prettyPrinted) {
             request.httpBody = jsonData
             request.setValue("application/json;charset=utf-8", forHTTPHeaderField: "Content-Type")
