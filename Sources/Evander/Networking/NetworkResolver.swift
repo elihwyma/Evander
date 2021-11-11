@@ -55,8 +55,7 @@ final public class EvanderNetworking {
                     print("Failed to create cache directory \(error.localizedDescription)")
                 }
             }
-            if let contents = try? self.downloadCache.contents(),
-               !contents.isEmpty {
+            if let contents = try? self.downloadCache.contents() {
                 for cached in contents {
                     try? FileManager.default.removeItem(atPath: cached.path)
                 }
@@ -301,6 +300,9 @@ final public class EvanderNetworking {
                 if cache {
                     memoryCache.setObject(image, forKey: encoded as NSString)
                     do {
+                        if !cacheDirectory.dirExists {
+                            FileManager.default.createDirectory(at: cacheDirectory, withIntermediateDirectories: true)
+                        }
                         try data.write(to: path, options: .atomic)
                     } catch {
                         print("Error saving to \(path.absoluteString) with error: \(error.localizedDescription)")

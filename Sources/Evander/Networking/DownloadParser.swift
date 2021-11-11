@@ -121,6 +121,9 @@ final public class EvanderDownloadDelegate: NSObject, URLSessionDownloadDelegate
             if FileManager.default.fileExists(atPath: destination.path) {
                 try FileManager.default.removeItem(at: destination)
             }
+            if !EvanderNetworking.downloadCache.dirExists {
+                try FileManager.default.createDirectory(at: EvanderNetworking.downloadCache, withIntermediateDirectories: true)
+            }
             try FileManager.default.moveItem(at: location, to: destination)
         } catch {
             container.errorCallback?(522, error, destination)
