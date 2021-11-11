@@ -246,3 +246,8 @@ postfix operator --
     x -= 1
     return (x + 1)
 }
+
+infix operator &=
+public func &=<T: Equatable>(lhs: T, rhs: [T]) -> Bool {
+    rhs.contains(lhs)
+}

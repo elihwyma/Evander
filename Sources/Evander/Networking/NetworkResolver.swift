@@ -301,7 +301,7 @@ final public class EvanderNetworking {
                     memoryCache.setObject(image, forKey: encoded as NSString)
                     do {
                         if !cacheDirectory.dirExists {
-                            FileManager.default.createDirectory(at: cacheDirectory, withIntermediateDirectories: true)
+                            try FileManager.default.createDirectory(at: cacheDirectory, withIntermediateDirectories: true)
                         }
                         try data.write(to: path, options: .atomic)
                     } catch {
