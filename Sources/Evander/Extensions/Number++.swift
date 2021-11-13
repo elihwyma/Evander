@@ -6,6 +6,8 @@ postfix operator ++
 prefix operator --
 postfix operator --
 
+infix operator &=
+
 
 // Increment
 @discardableResult public prefix func ++( x: inout Int) -> Int {
@@ -247,7 +249,6 @@ postfix operator --
     return (x + 1)
 }
 
-infix operator &=
 public func &=<T: Equatable>(lhs: T, rhs: [T]) -> Bool {
     rhs.contains(lhs)
 }
