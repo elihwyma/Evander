@@ -7,7 +7,7 @@
 //
 
 import UIKit
-import CryptoKit
+import CommonCrypto
 
 final public class LanguageHelper {
     
@@ -19,17 +19,36 @@ final public class LanguageHelper {
     public var isRtl = false
     
     private func hashFolder(_ url: URL) -> (String, [String]) {
-        var selected = SHA256()
         var filenames = [String]()
-        for content in url.implicitContents {
-            if content.lastPathComponent &= ["LaunchScreen.storyboardc", "Main.storyboardc"] { continue }
-            if let data = try? Data(contentsOf: content) {
-                selected.update(data: data)
-                filenames.append(content.lastPathComponent)
+        var context = CC_SHA256_CTX()
+        CC_SHA256_Init(&context)
+        
+        while autoreleasepool(invoking: {
+            for content in url.implicitContents {
+                if content.lastPathComponent &= ["LaunchScreen.storyboardc", "Main.storyboardc"] { continue }
+                if let data = try? Data(contentsOf: content) {
+                    _ = data.withUnsafeBytes { bytesFromBuffer -> Int32 in
+                      guard let rawBytes = bytesFromBuffer.bindMemory(to: UInt8.self).baseAddress else {
+                        return Int32(kCCMemoryFailure)
+                      }
+
+                      return CC_SHA256_Update(&context, rawBytes, numericCast(data.count))
+                    }
+                    filenames.append(content.lastPathComponent)
+                }
             }
+            return false
+        }) { }
+        var digestData = Data(count: Int(CC_SHA256_DIGEST_LENGTH))
+        _ = digestData.withUnsafeMutableBytes { bytesFromDigest -> Int32 in
+            
+            guard let rawBytes = bytesFromDigest.bindMemory(to: UInt8.self).baseAddress else {
+                return Int32(kCCMemoryFailure)
+            }
+
+            return CC_SHA256_Final(rawBytes, &context)
         }
-        let data = selected.finalize()
-        return (data.compactMap { String(format: "%02x", $0) }.joined(), filenames)
+        return (digestData.compactMap { String(format: "%02x", $0) }.joined(), filenames)
     }
     
     private func delete(_ folder: URL, if_newer newer: URL) -> Bool {
