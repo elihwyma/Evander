@@ -9,21 +9,25 @@ postfix operator --
 infix operator &=
 
 // Increment
-prefix func ++<T: Numeric>(_ x: inout T) {
+@discardableResult public prefix func ++<T: Numeric>(_ x: inout T) -> T {
     x += 1
+    return x
 }
 
-postfix func ++<T: Numeric>(_ x: inout T) {
+@discardableResult public postfix func ++<T: Numeric>(_ x: inout T) -> T {
     x += 1
+    return x
 }
 
 // Decrement
-prefix func --<T: Numeric>(_ x: inout T) {
+@discardableResult public prefix func --<T: Numeric>(_ x: inout T) -> T {
     x -= 1
+    return x
 }
 
-postfix func --<T: Numeric>(_ x: inout T) {
+@discardableResult public postfix func --<T: Numeric>(_ x: inout T) -> T {
     x -= 1
+    return x
 }
 
 public func &=<T: Equatable>(lhs: T, rhs: [T]) -> Bool {
