@@ -16,7 +16,7 @@ infix operator &=
 
 @discardableResult public postfix func ++<T: Numeric>(_ x: inout T) -> T {
     x += 1
-    return x
+    return (x - 1)
 }
 
 // Decrement
@@ -27,7 +27,7 @@ infix operator &=
 
 @discardableResult public postfix func --<T: Numeric>(_ x: inout T) -> T {
     x -= 1
-    return x
+    return (x + 1)
 }
 
 public func &=<T: Equatable>(lhs: T, rhs: [T]) -> Bool {
