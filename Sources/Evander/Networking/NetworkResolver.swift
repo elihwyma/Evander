@@ -7,7 +7,7 @@ import UIKit
 final public class EvanderNetworking {
     
     static let MANIFEST_VERSION = "1.0"
-    static var CACHE_FORCE: FileManager.SearchPathDirectory = .cachesDirectory
+    public static var CACHE_FORCE: FileManager.SearchPathDirectory = .cachesDirectory
 
     // swiftlint:disable force_cast
     public static var _cacheDirectory: URL = {
