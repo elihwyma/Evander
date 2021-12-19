@@ -7,10 +7,11 @@ import UIKit
 final public class EvanderNetworking {
     
     static let MANIFEST_VERSION = "1.0"
+    static var CACHE_FORCE: FileManager.SearchPathDirectory = .cachesDirectory
 
     // swiftlint:disable force_cast
     public static var _cacheDirectory: URL = {
-        FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+        FileManager.default.urls(for: CACHE_FORCE, in: .userDomainMask)[0]
             .appendingPathComponent((Bundle.main.infoDictionary?[kCFBundleNameKey as String] as! String).replacingOccurrences(of: " ", with: ""))
     }()
     // swiftlint:enable force_cast
