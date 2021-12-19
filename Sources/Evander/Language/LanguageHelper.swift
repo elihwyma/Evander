@@ -11,7 +11,7 @@ import CommonCrypto
 
 final public class LanguageHelper {
     
-    static let shared = LanguageHelper()
+    public static let shared = LanguageHelper()
     public let availableLanguages: [Language]
     public var primaryBundle: Bundle?
     public var alternateBundle: Bundle?
@@ -218,11 +218,4 @@ final public class LanguageHelper {
         }
     }
     
-}
-
-extension UIView {
-    open override func awakeFromNib() {
-        super.awakeFromNib()
-        self.semanticContentAttribute = LanguageHelper.shared.isRtl ? .forceRightToLeft : .forceLeftToRight
-    }
 }
