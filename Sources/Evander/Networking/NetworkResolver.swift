@@ -211,17 +211,42 @@ final public class EvanderNetworking {
         request(url: url, type: type, method: method, headers: headers, json: json, cache: cache, completion)
     }
     
-    class public func request<T: Any>(url: URL, type: T.Type, method: String = "GET", headers: [String: String] = [:], json: [String: AnyHashable]? = nil, cache: CacheConfig = .init(), _ completion: @escaping Response<T>) {
+    class public func request<T: Any>(url: URL, type: T.Type, method: String = "GET", headers: [String: String] = [:], json: [String: AnyHashable]? = nil, multipart: [[String: Data]]? = nil, cache: CacheConfig = .init(), _ completion: @escaping Response<T>) {
         var request = URLRequest(url: url, timeoutInterval: 30)
         request.httpMethod = method
         for (key, value) in headers {
             request.setValue(value, forHTTPHeaderField: key)
         }
-        if let json = json,
-           !json.isEmpty,
-           let jsonData = try? JSONSerialization.data(withJSONObject: json, options: .prettyPrinted) {
-            request.httpBody = jsonData
-            request.setValue("application/json;charset=utf-8", forHTTPHeaderField: "Content-Type")
+        if let multipart = multipart {
+            let boundary = UUID().uuidString
+            var body = Data()
+            func addString(_ string: String) {
+                guard let data = string.data(using: .utf8) else { return }
+                body.append(data)
+            }
+            if let json = json,
+               !json.isEmpty,
+               let jsonData = try? JSONSerialization.data(withJSONObject: json, options: .prettyPrinted) {
+                body.addMultiPart(boundary: boundary, name: "payload_json", contentType: "application/json", data: jsonData)
+            }
+            for (index, item) in multipart.enumerated() {
+                if item.keys.count != 1 { continue }
+                let contentType = item.keys.first!
+                let components = contentType.split(separator: "/")
+                guard components.count == 2 else { continue }
+                let fileType = components.last!
+                let name = components.first!
+                let data = item[contentType]!
+                body.addMultiPart(boundary: boundary, name: "\(name)\(index)", filename: "\(name)\(index).\(fileType)", contentType: "\(name)/\(fileType)", data: data)
+            }
+            body.addMultiPartEnd(boundary: boundary)
+            request.httpBody = body as Data
+            request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        } else if let json = json,
+                  !json.isEmpty,
+                  let jsonData = try? JSONSerialization.data(withJSONObject: json, options: .prettyPrinted) {
+           request.httpBody = jsonData
+           request.setValue("application/json;charset=utf-8", forHTTPHeaderField: "Content-Type")
         }
         Self.request(request: request, type: type, cache: cache, completion)
     }
@@ -401,6 +426,28 @@ final public class EvanderNetworking {
         }
         return (true, nil)
     }
+}
+
+fileprivate extension Data {
+    
+    mutating func addMultiPart(boundary: String, name: String, filename: String, contentType: String, data: Data) {
+        append("\r\n--\(boundary)\r\n".data(using: .utf8)!)
+        append("Content-Disposition: form-data; name=\"\(name)\"; filename=\"\(filename)\"\r\n".data(using: .utf8)!)
+        append("Content-Type: \(contentType)\r\n\r\n".data(using: .utf8)!)
+        append(data)
+    }
+    
+    mutating func addMultiPart(boundary: String, name: String, contentType: String, data: Data) {
+        append("\r\n--\(boundary)\r\n".data(using: .utf8)!)
+        append("Content-Disposition: form-data; name=\"\(name)\"\"\r\n".data(using: .utf8)!)
+        append("Content-Type: \(contentType)\r\n\r\n".data(using: .utf8)!)
+        append(data)
+    }
+    
+    mutating func addMultiPartEnd(boundary: String) {
+        append("\r\n--\(boundary)--\r\n".data(using: .utf8)!)
+    }
+    
 }
 
 
