@@ -82,6 +82,16 @@ final public class SafeArray<Element> {
         }
     }
     
+    public func appendGroup(_ package: [Element]) {
+        if !isOnQueue {
+            queue.async(flags: .barrier) {
+                self.array += package
+            }
+        } else {
+            self.array += package
+        }
+    }
+    
     public func removeAll() {
         if !isOnQueue {
             queue.async(flags: .barrier) {
