@@ -102,6 +102,16 @@ final public class SafeArray<Element> {
         }
     }
     
+    public func removeFirst() -> Element {
+        if !isOnQueue {
+            var element: Element?
+            queue.sync { element = self.array.removeFirst() }
+            return element!
+        } else {
+            return self.array.removeFirst()
+        }
+    }
+    
     public func removeAll(_ package: @escaping (Element) -> Bool) {
         if !isOnQueue {
             queue.async(flags: .barrier) {
