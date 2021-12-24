@@ -25,6 +25,10 @@ public extension URL {
         attributes?[.creationDate] as? Date
     }
     
+    var modificationDate: Date? {
+        attributes?[.modificationDate] as? Date
+    }
+    
     var exists: Bool {
         FileManager.default.fileExists(atPath: path)
     }
@@ -43,3 +47,5 @@ public extension URL {
         (try? contents()) ?? []
     }
 }
+
+// Fiore says hi
