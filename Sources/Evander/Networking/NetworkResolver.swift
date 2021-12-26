@@ -35,8 +35,30 @@ final public class EvanderNetworking {
     private static var manifest: URL {
         _cacheDirectory.appendingPathComponent(".MANIFEST")
     }
+
+    private class Callback: NSObject {
+        private static let callbackQueue: DispatchQueue = {
+            let queue = DispatchQueue(label: "EvanderNetworking/CallbackQueue", qos: .utility)
+            queue.setSpecific(key: Callback.queueKey, value: Callback.queueContext)
+            return queue
+        }()
+        private static let queueKey = DispatchSpecificKey<Int>()
+        private static var queueContext = 3042
+        
+        public var callbacks = SafeArray<(UIImage) -> Void>(queue: callbackQueue, key: queueKey, context: queueContext)
+        
+        init(_ callback: @escaping (UIImage) -> Void) {
+            super.init()
+            add(callback)
+        }
+        
+        public func add(_ callback: @escaping (UIImage) -> Void) {
+            callbacks.append(callback)
+        }
+    }
     
     public static var memoryCache = NSCache<NSString, UIImage>()
+    private static var callbackCache = NSCache<NSURL, Callback>()
 
     
     public class func clearCache() {
@@ -266,71 +288,114 @@ final public class EvanderNetworking {
         }
         task.resume()
     }
-
-    public class func image(_ url: String?, method: String = "GET", headers: [String: String] = [:], cache: Bool = true, scale: CGFloat? = nil, size: CGSize? = nil, _ completion: ((_ refresh: Bool, _ image: UIImage?) -> Void)?) -> UIImage? {
-        guard let surl = url,
-              let url = URL(string: surl) else { return nil }
-        return image(url, method: method, headers: headers, cache: cache, scale: scale, size: size, completion)
-    }
     
-    public class func image(_ url: URL, method: String = "GET", headers: [String: String] = [:], cache: Bool = true, scale: CGFloat? = nil, size: CGSize? = nil, _ completion: ((_ refresh: Bool, _ image: UIImage?) -> Void)?) -> UIImage? {
-        if String(url.absoluteString.prefix(7)) == "file://" {
-            return nil
+    public class func image(url: URL?, method: String = "GET", headers: [String: String] = [:], cache: CacheConfig = .init(localCache: true, skipNetwork: true), scale: CGFloat? = nil, size: CGSize? = nil, completion: @escaping (UIImage) -> Void) -> UIImage? {
+        guard let url = url else { return nil }
+        let encoded = url.absoluteString.toBase64
+        if cache.localCache || cache.skipNetwork,
+           let image = memoryCache.object(forKey: encoded as NSString) {
+            return image
         }
         var size = size
         if size?.height == 0 || size?.width == 0 {
             size = nil
         }
-        var pastData: Data?
-        var returnImage: UIImage?
-        let encoded = url.absoluteString.toBase64
-        if cache,
-           let image = memoryCache.object(forKey: encoded as NSString) {
-            return image
-        }
-        let path = mediaCache.appendingPathComponent("\(encoded).png")
-        if path.exists {
-            if let image = ImageProcessing.downsample(url: path, to: size, scale: scale) {
-                if cache {
-                    memoryCache.setObject(image, forKey: encoded as NSString)
-                    pastData = image.pngData()
-                    if Self.skipNetwork(path) {
-                        return image
-                    } else {
-                        returnImage = image
-                    }
-                } else {
+        
+        func work() -> UIImage? {
+            if url.scheme == "file" {
+                if url.exists,
+                   let image = ImageProcessing.downsample(url: url, to: size, scale: scale) {
                     return image
                 }
+                return nil
             }
-        }
-        var request = URLRequest(url: url, timeoutInterval: 30)
-        request.httpMethod = method
-        for (key, value) in headers {
-            request.setValue(value, forHTTPHeaderField: key)
-        }
-        let task = URLSession.shared.dataTask(with: request) { [self] data, _, _ -> Void in
-            if let data = data,
-               var image = (scale != nil) ? UIImage(data: data, scale: scale!) : UIImage(data: data) {
-                if let downscaled = ImageProcessing.downsample(image: image, to: size, scale: scale) {
-                    image = downscaled
-                }
-                completion?(pastData != image.pngData(), image)
-                if cache {
+            let path = mediaCache.appendingPathComponent("\(encoded).png")
+            if path.exists,
+               let image = ImageProcessing.downsample(url: path, to: size, scale: scale) {
+                if cache.localCache || cache.skipNetwork {
                     memoryCache.setObject(image, forKey: encoded as NSString)
-                    do {
-                        if !mediaCache.dirExists {
-                            try FileManager.default.createDirectory(at: mediaCache, withIntermediateDirectories: true)
-                        }
-                        try data.write(to: path, options: .atomic)
-                    } catch {
-                        print("Error saving to \(path.absoluteString) with error: \(error.localizedDescription)")
+                    if cache.skipNetwork && Self.skipNetwork(path) {
+                        return image
                     }
+                } else {
+                    completion(image)
+                }
+            }
+            
+            if let callback = callbackCache.object(forKey: url as NSURL) {
+                callback.add(completion)
+            } else {
+                callbackCache.setObject(Callback(completion), forKey: url as NSURL)
+                request(url: url, type: Data.self, method: method, headers: headers, json: nil, multipart: nil, cache: .init(localCache: false, skipNetwork: false)) { _, _, _, data in
+                    guard let data = data,
+                          var image = UIImage(data: data) else { return }
+                    image = ImageProcessing.downsample(image: image, to: size, scale: scale) ?? image
+                    if let callback = callbackCache.object(forKey: url as NSURL) {
+                        for callback in callback.callbacks.raw {
+                            callback(image)
+                        }
+                    } else {
+                        completion(image)
+                    }
+                    memoryCache.setObject(image, forKey: encoded as NSString)
+                    try? image.pngData()?.write(to: path)
+                }
+            }
+            return nil
+        }
+        
+        return work()
+    }
+    
+    public class func image(url: String?, method: String = "GET", headers: [String: String] = [:], cache: CacheConfig = .init(localCache: true, skipNetwork: true), scale: CGFloat? = nil, size: CGSize? = nil, completion: @escaping (UIImage) -> Void) -> UIImage? {
+        guard let _url = url,
+              let url = URL(string: _url) else {
+             return nil
+        }
+        return image(url: url, method: method, headers: headers, cache: cache, scale: scale, size: size, completion: completion)
+    }
+    
+    public class func image(url: URL?, method: String = "GET", headers: [String: String] = [:], cache: CacheConfig = .init(localCache: true, skipNetwork: true), scale: CGFloat? = nil, size: CGSize? = nil, condition: @escaping () -> (Bool), imageView: UIImageView, fallback: UIImage?) {
+        image(url: url, method: method, headers: headers, cache: cache, scale: scale, size: size, condition: condition, imageViews: [imageView], fallback: fallback)
+    }
+    
+    public class func image(url: URL?, method: String = "GET", headers: [String: String] = [:], cache: CacheConfig = .init(localCache: true, skipNetwork: true), scale: CGFloat? = nil, size: CGSize? = nil, condition: @escaping () -> (Bool), imageViews: [UIImageView], fallback: UIImage?) {
+        if let image = image(url: url, method: method, headers: headers, cache: cache, scale: scale, size: size, completion: { image in
+            Thread.mainBlock {
+                if condition() {
+                    imageViews.forEach { $0.image = image }
+                }
+            }
+        }) {
+            Thread.mainBlock {
+                if condition() {
+                    imageViews.forEach { $0.image = image }
+                }
+            }
+        } else {
+            Thread.mainBlock {
+                if condition() {
+                    imageViews.forEach { $0.image = fallback }
                 }
             }
         }
-        task.resume()
-        return returnImage
+    }
+    
+    public class func image(url: String?, method: String = "GET", headers: [String: String] = [:], cache: CacheConfig = .init(localCache: true, skipNetwork: true), scale: CGFloat? = nil, size: CGSize? = nil, condition: @escaping () -> (Bool), imageView: UIImageView, fallback: UIImage) {
+        image(url: url, method: method, headers: headers, cache: cache, scale: scale, size: size, condition: condition, imageViews: [imageView], fallback: fallback)
+    }
+    
+    public class func image(url: String?, method: String = "GET", headers: [String: String] = [:], cache: CacheConfig = .init(localCache: true, skipNetwork: true), scale: CGFloat? = nil, size: CGSize? = nil, condition: @escaping () -> (Bool), imageViews: [UIImageView], fallback: UIImage) {
+        guard let _url = url,
+              let url = URL(string: _url) else {
+            Thread.mainBlock {
+                if condition() {
+                    imageViews.forEach { $0.image = fallback }
+                }
+            }
+            return
+        }
+        image(url: url, method: method, headers: headers, cache: cache, scale: scale, size: size, condition: condition, imageViews: imageViews, fallback: fallback)
     }
     
     public class func gif(_ url: String, method: String = "GET", headers: [String: String] = [:], cache: Bool = true, scale: CGFloat? = nil, size: CGSize? = nil, _ completion: ((_ refresh: Bool, _ image: UIImage?) -> Void)?) -> UIImage? {

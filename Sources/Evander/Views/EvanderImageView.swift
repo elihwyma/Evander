@@ -28,16 +28,7 @@ public class EvanderImageView: UIImageView {
             return
         }
         guard let url = url else { image = nil; return }
-        image = EvanderNetworking.image(url, cache: cache, size: size, { [weak self] reload, image in
-            if self?.url == url,
-                  reload,
-                  let image = image {
-                DispatchQueue.main.async {
-                    guard let `self` = self else { return }
-                    self.image = image
-                }
-            }
-        })
+        EvanderNetworking.image(url: url, size: size, condition: { [weak self] in self?.url == url }, imageView: self, fallback: nil)
     }
     
 }

@@ -49,22 +49,22 @@ final public class SafeArray<Element> {
         return array
     }
     
-    public func contains(where package: (Element) -> Bool) -> Bool {
+    public func contains(where element: (Element) -> Bool) -> Bool {
         if !isOnQueue {
             var result = false
-            queue.sync { result = self.array.contains(where: package) }
+            queue.sync { result = self.array.contains(where: element) }
             return result
         }
-        return array.contains(where: package)
+        return array.contains(where: element)
     }
     
-    public func setTo(_ packages: [Element]) {
+    public func setTo(_ element: [Element]) {
         if !isOnQueue {
             queue.async(flags: .barrier) {
-                self.array = packages
+                self.array = element
             }
         } else {
-            self.array = packages
+            self.array = element
         }
     }
     
@@ -72,23 +72,23 @@ final public class SafeArray<Element> {
         raw.enumerated()
     }
     
-    public func append(_ package: Element) {
+    public func append(_ element: Element) {
         if !isOnQueue {
             queue.async(flags: .barrier) {
-                self.array.append(package)
+                self.array.append(element)
             }
         } else {
-            self.array.append(package)
+            self.array.append(element)
         }
     }
     
-    public func appendGroup(_ package: [Element]) {
+    public func appendGroup(_ element: [Element]) {
         if !isOnQueue {
             queue.async(flags: .barrier) {
-                self.array += package
+                self.array += element
             }
         } else {
-            self.array += package
+            self.array += element
         }
     }
     
@@ -112,15 +112,15 @@ final public class SafeArray<Element> {
         }
     }
     
-    public func removeAll(_ package: @escaping (Element) -> Bool) {
+    public func removeAll(_ element: @escaping (Element) -> Bool) {
         if !isOnQueue {
             queue.async(flags: .barrier) {
-                while let index = self.array.firstIndex(where: package) {
+                while let index = self.array.firstIndex(where: element) {
                     self.array.remove(at: index)
                 }
             }
         } else {
-            while let index = self.array.firstIndex(where: package) {
+            while let index = self.array.firstIndex(where: element) {
                 self.array.remove(at: index)
             }
         }
@@ -213,22 +213,22 @@ final public class SafeContiguousArray<Element> {
         return array
     }
     
-    public func contains(where package: (Element) -> Bool) -> Bool {
+    public func contains(where element: (Element) -> Bool) -> Bool {
         if !isOnQueue {
             var result = false
-            queue.sync { result = self.array.contains(where: package) }
+            queue.sync { result = self.array.contains(where: element) }
             return result
         }
-        return array.contains(where: package)
+        return array.contains(where: element)
     }
     
-    public func setTo(_ packages: ContiguousArray<Element>) {
+    public func setTo(_ element: ContiguousArray<Element>) {
         if !isOnQueue {
             queue.async(flags: .barrier) {
-                self.array = packages
+                self.array = element
             }
         } else {
-            self.array = packages
+            self.array = element
         }
     }
     
@@ -236,23 +236,23 @@ final public class SafeContiguousArray<Element> {
         raw.enumerated()
     }
     
-    public func setTo(_ packages: [Element]) {
+    public func setTo(_ element: [Element]) {
         if !isOnQueue {
             queue.async(flags: .barrier) {
-                self.array = ContiguousArray<Element>(packages)
+                self.array = ContiguousArray<Element>(element)
             }
         } else {
-            self.array = ContiguousArray<Element>(packages)
+            self.array = ContiguousArray<Element>(element)
         }
     }
     
-    public func append(_ package: Element) {
+    public func append(_ element: Element) {
         if !isOnQueue {
             queue.async(flags: .barrier) {
-                self.array.append(package)
+                self.array.append(element)
             }
         } else {
-            self.array.append(package)
+            self.array.append(element)
         }
     }
     
@@ -266,15 +266,15 @@ final public class SafeContiguousArray<Element> {
         }
     }
     
-    public func removeAll(_ package: @escaping (Element) -> Bool) {
+    public func removeAll(_ element: @escaping (Element) -> Bool) {
         if !isOnQueue {
             queue.async(flags: .barrier) {
-                while let index = self.array.firstIndex(where: package) {
+                while let index = self.array.firstIndex(where: element) {
                     self.array.remove(at: index)
                 }
             }
         } else {
-            while let index = self.array.firstIndex(where: package) {
+            while let index = self.array.firstIndex(where: element) {
                 self.array.remove(at: index)
             }
         }
