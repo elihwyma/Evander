@@ -355,42 +355,42 @@ final public class EvanderNetworking {
         return image(url: url, method: method, headers: headers, cache: cache, scale: scale, size: size, completion: completion)
     }
     
-    public class func image(url: URL?, method: String = "GET", headers: [String: String] = [:], cache: CacheConfig = .init(localCache: true, skipNetwork: true), scale: CGFloat? = nil, size: CGSize? = nil, condition: @escaping () -> (Bool), imageView: UIImageView, fallback: UIImage?) {
+    public class func image(url: URL?, method: String = "GET", headers: [String: String] = [:], cache: CacheConfig = .init(localCache: true, skipNetwork: true), scale: CGFloat? = nil, size: CGSize? = nil, condition: @escaping () -> (Bool), imageView: UIImageView?, fallback: UIImage?) {
         image(url: url, method: method, headers: headers, cache: cache, scale: scale, size: size, condition: condition, imageViews: [imageView], fallback: fallback)
     }
     
-    public class func image(url: URL?, method: String = "GET", headers: [String: String] = [:], cache: CacheConfig = .init(localCache: true, skipNetwork: true), scale: CGFloat? = nil, size: CGSize? = nil, condition: @escaping () -> (Bool), imageViews: [UIImageView], fallback: UIImage?) {
+    public class func image(url: URL?, method: String = "GET", headers: [String: String] = [:], cache: CacheConfig = .init(localCache: true, skipNetwork: true), scale: CGFloat? = nil, size: CGSize? = nil, condition: @escaping () -> (Bool), imageViews: [UIImageView?], fallback: UIImage?) {
         if let image = image(url: url, method: method, headers: headers, cache: cache, scale: scale, size: size, completion: { image in
             Thread.mainBlock {
                 if condition() {
-                    imageViews.forEach { $0.image = image }
+                    imageViews.forEach { $0?.image = image }
                 }
             }
         }) {
             Thread.mainBlock {
                 if condition() {
-                    imageViews.forEach { $0.image = image }
+                    imageViews.forEach { $0?.image = image }
                 }
             }
         } else {
             Thread.mainBlock {
                 if condition() {
-                    imageViews.forEach { $0.image = fallback }
+                    imageViews.forEach { $0?.image = fallback }
                 }
             }
         }
     }
     
-    public class func image(url: String?, method: String = "GET", headers: [String: String] = [:], cache: CacheConfig = .init(localCache: true, skipNetwork: true), scale: CGFloat? = nil, size: CGSize? = nil, condition: @escaping () -> (Bool), imageView: UIImageView, fallback: UIImage) {
+    public class func image(url: String?, method: String = "GET", headers: [String: String] = [:], cache: CacheConfig = .init(localCache: true, skipNetwork: true), scale: CGFloat? = nil, size: CGSize? = nil, condition: @escaping () -> (Bool), imageView: UIImageView?, fallback: UIImage) {
         image(url: url, method: method, headers: headers, cache: cache, scale: scale, size: size, condition: condition, imageViews: [imageView], fallback: fallback)
     }
     
-    public class func image(url: String?, method: String = "GET", headers: [String: String] = [:], cache: CacheConfig = .init(localCache: true, skipNetwork: true), scale: CGFloat? = nil, size: CGSize? = nil, condition: @escaping () -> (Bool), imageViews: [UIImageView], fallback: UIImage) {
+    public class func image(url: String?, method: String = "GET", headers: [String: String] = [:], cache: CacheConfig = .init(localCache: true, skipNetwork: true), scale: CGFloat? = nil, size: CGSize? = nil, condition: @escaping () -> (Bool), imageViews: [UIImageView?], fallback: UIImage) {
         guard let _url = url,
               let url = URL(string: _url) else {
             Thread.mainBlock {
                 if condition() {
-                    imageViews.forEach { $0.image = fallback }
+                    imageViews.forEach { $0?.image = fallback }
                 }
             }
             return
