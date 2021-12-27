@@ -356,10 +356,18 @@ final public class EvanderNetworking {
     }
     
     public class func image(url: URL?, method: String = "GET", headers: [String: String] = [:], cache: CacheConfig = .init(localCache: true, skipNetwork: true), scale: CGFloat? = nil, size: CGSize? = nil, condition: @escaping () -> (Bool), imageView: UIImageView?, fallback: UIImage? = nil) {
+        var size = size
+        if size == nil {
+            size = imageView?.frame.size
+        }
         image(url: url, method: method, headers: headers, cache: cache, scale: scale, size: size, condition: condition, imageViews: [imageView], fallback: fallback)
     }
     
     public class func image(url: URL?, method: String = "GET", headers: [String: String] = [:], cache: CacheConfig = .init(localCache: true, skipNetwork: true), scale: CGFloat? = nil, size: CGSize? = nil, condition: @escaping () -> (Bool), imageViews: [UIImageView?], fallback: UIImage? = nil) {
+        let imageViews = imageViews.map { imageView -> UIImageView? in
+            weak var imageView = imageView
+            return imageView
+        }
         if let image = image(url: url, method: method, headers: headers, cache: cache, scale: scale, size: size, { image in
             Thread.mainBlock {
                 if condition() {
@@ -382,6 +390,10 @@ final public class EvanderNetworking {
     }
     
     public class func image(url: String?, method: String = "GET", headers: [String: String] = [:], cache: CacheConfig = .init(localCache: true, skipNetwork: true), scale: CGFloat? = nil, size: CGSize? = nil, condition: @escaping () -> (Bool), imageView: UIImageView?, fallback: UIImage? = nil) {
+        var size = size
+        if size == nil {
+            size = imageView?.frame.size
+        }
         image(url: url, method: method, headers: headers, cache: cache, scale: scale, size: size, condition: condition, imageViews: [imageView], fallback: fallback)
     }
     
