@@ -289,7 +289,7 @@ final public class EvanderNetworking {
         task.resume()
     }
     
-    public class func image(url: URL?, method: String = "GET", headers: [String: String] = [:], cache: CacheConfig = .init(localCache: true, skipNetwork: true), scale: CGFloat? = nil, size: CGSize? = nil, completion: @escaping (UIImage) -> Void) -> UIImage? {
+    public class func image(url: URL?, method: String = "GET", headers: [String: String] = [:], cache: CacheConfig = .init(localCache: true, skipNetwork: true), scale: CGFloat? = nil, size: CGSize? = nil, _ completion: @escaping (UIImage) -> Void) -> UIImage? {
         guard let url = url else { return nil }
         let encoded = url.absoluteString.toBase64
         if cache.localCache || cache.skipNetwork,
@@ -347,7 +347,7 @@ final public class EvanderNetworking {
         return work()
     }
     
-    public class func image(url: String?, method: String = "GET", headers: [String: String] = [:], cache: CacheConfig = .init(localCache: true, skipNetwork: true), scale: CGFloat? = nil, size: CGSize? = nil, completion: @escaping (UIImage) -> Void) -> UIImage? {
+    public class func image(url: String?, method: String = "GET", headers: [String: String] = [:], cache: CacheConfig = .init(localCache: true, skipNetwork: true), scale: CGFloat? = nil, size: CGSize? = nil, _ completion: @escaping (UIImage) -> Void) -> UIImage? {
         guard let _url = url,
               let url = URL(string: _url) else {
              return nil
