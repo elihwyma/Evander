@@ -352,7 +352,7 @@ final public class EvanderNetworking {
               let url = URL(string: _url) else {
              return nil
         }
-        return image(url: url, method: method, headers: headers, cache: cache, scale: scale, size: size, completion: completion)
+        return image(url: url, method: method, headers: headers, cache: cache, scale: scale, size: size, completion)
     }
     
     public class func image(url: URL?, method: String = "GET", headers: [String: String] = [:], cache: CacheConfig = .init(localCache: true, skipNetwork: true), scale: CGFloat? = nil, size: CGSize? = nil, condition: @escaping () -> (Bool), imageView: UIImageView?, fallback: UIImage? = nil) {
@@ -360,7 +360,7 @@ final public class EvanderNetworking {
     }
     
     public class func image(url: URL?, method: String = "GET", headers: [String: String] = [:], cache: CacheConfig = .init(localCache: true, skipNetwork: true), scale: CGFloat? = nil, size: CGSize? = nil, condition: @escaping () -> (Bool), imageViews: [UIImageView?], fallback: UIImage? = nil) {
-        if let image = image(url: url, method: method, headers: headers, cache: cache, scale: scale, size: size, completion: { image in
+        if let image = image(url: url, method: method, headers: headers, cache: cache, scale: scale, size: size, { image in
             Thread.mainBlock {
                 if condition() {
                     imageViews.forEach { $0?.image = image }
