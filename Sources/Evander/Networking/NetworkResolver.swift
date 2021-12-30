@@ -268,7 +268,7 @@ final public class EvanderNetworking {
                   !json.isEmpty,
                   let jsonData = try? JSONSerialization.data(withJSONObject: json, options: .prettyPrinted) {
            request.httpBody = jsonData
-           request.setValue("application/json;charset=utf-8", forHTTPHeaderField: "Content-Type")
+           request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         }
         Self.request(request: request, type: type, cache: cache, completion)
     }
