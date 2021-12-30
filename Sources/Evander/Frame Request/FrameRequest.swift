@@ -14,7 +14,12 @@ public final class FrameRateRequest {
     private let duration: TimeInterval
     
     init(preferredFrameRate: Float = 120, duration: TimeInterval) {
-        frameRateRange = CAFrameRateRange(minimum: 30, maximum: Float(UIScreen.main.maximumFramesPerSecond), preferred: preferredFrameRate)
+        let max = Float(UIScreen.main.maximumFramesPerSecond)
+        var preferredFrameRate = preferredFrameRate
+        if preferredFrameRate > max {
+            preferredFrameRate = max
+        }
+        frameRateRange = CAFrameRateRange(minimum: 30, maximum: max, preferred: preferredFrameRate)
         self.duration = duration
     }
     
