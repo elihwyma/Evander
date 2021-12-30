@@ -8,6 +8,7 @@ final public class EvanderNetworking {
     
     static let MANIFEST_VERSION = "1.0"
     public static var CACHE_FORCE: FileManager.SearchPathDirectory = .cachesDirectory
+    public static var ENABLE_COOKIES: Bool = false
 
     // swiftlint:disable force_cast
     public static var _cacheDirectory: URL = {
@@ -204,6 +205,14 @@ final public class EvanderNetworking {
         }
         URLSession.shared.dataTask(with: request) { data, response, error -> Void in
             let statusCode = (response as? HTTPURLResponse)?.statusCode
+            if ENABLE_COOKIES {
+                if let httpResponse = response as? HTTPURLResponse,
+                   let dict = httpResponse.allHeaderFields as? [String: String],
+                   let url = response?.url {
+                    let cookies = HTTPCookie.cookies(withResponseHeaderFields: dict, for: url)
+                    HTTPCookieStorage.shared.setCookies(cookies, for: url, mainDocumentURL: nil)
+                }
+            }
             var returnData: T?
             var success: Bool = false
             if let data = data {
