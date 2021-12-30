@@ -10,28 +10,36 @@ import UIKit
 @available(iOS 15, *)
 public final class FrameRateRequest {
     
-    private let frameRateRange: CAFrameRateRange
-    private let duration: TimeInterval
-    
-    init(preferredFrameRate: Float = 120, duration: TimeInterval) {
+    static private var remainingTime: TimeInterval = 0
+    static private var activeLink: CADisplayLink = {
         let max = Float(UIScreen.main.maximumFramesPerSecond)
-        var preferredFrameRate = preferredFrameRate
+        var preferredFrameRate: Float = 120
         if preferredFrameRate > max {
             preferredFrameRate = max
         }
-        frameRateRange = CAFrameRateRange(minimum: 30, maximum: max, preferred: preferredFrameRate)
-        self.duration = duration
-    }
-    
-    public func perform() {
-        let displayLink = CADisplayLink(target: self, selector: #selector(dummyFunction))
+        let frameRateRange = CAFrameRateRange(minimum: 30, maximum: max, preferred: preferredFrameRate)
+        let displayLink = CADisplayLink(target: FrameRateRequest.shared, selector: #selector(dummyFunction))
         displayLink.preferredFrameRateRange = frameRateRange
-        displayLink.add(to: .current, forMode: .common)
+        return displayLink
+    }()
+    static private var shared = FrameRateRequest()
+    
+    public class func perform(with duration: TimeInterval) {
+        if Thread.isMainThread {
+            fatalError("Animations Cannot be Performed from a background thread")
+        }
+        if remainingTime == 0 {
+            activeLink.add(to: .current, forMode: .common)
+        }
+        remainingTime += duration
         DispatchQueue.main.asyncAfter(deadline: .now() + duration) {
-            displayLink.remove(from: .current, forMode: .common)
+            remainingTime -= duration
+            if remainingTime == 0 {
+                activeLink.remove(from: .current, forMode: .common)
+            }
         }
     }
-    
+        
     @objc private func dummyFunction() {}
 }
 
@@ -43,7 +51,7 @@ public final class FrameRateRequest {
                        animations: @escaping () -> Void,
                        completion: ((Bool) -> Void)? = nil) {
         if #available(iOS 15, *) {
-            FrameRateRequest(duration: duration).perform()
+            FrameRateRequest.perform(with: duration)
         }
         UIView.animate(withDuration: duration, delay: delay, options: options, animations: animations, completion: completion)
     }
@@ -52,7 +60,7 @@ public final class FrameRateRequest {
                               animations: @escaping () -> Void,
                               completion: ((Bool) -> Void)? = nil) {
         if #available(iOS 15, *) {
-            FrameRateRequest(duration: duration).perform()
+            FrameRateRequest.perform(with: duration)
         }
         UIView.animate(withDuration: duration, animations: animations, completion: completion)
     }
@@ -60,7 +68,7 @@ public final class FrameRateRequest {
     @objc class public func animate(withDuration duration: TimeInterval,
                               animations: @escaping () -> Void) {
         if #available(iOS 15, *) {
-            FrameRateRequest(duration: duration).perform()
+            FrameRateRequest.perform(with: duration)
         }
         UIView.animate(withDuration: duration, animations: animations)
     }
@@ -72,7 +80,7 @@ public final class FrameRateRequest {
                                        animations: @escaping () -> Void,
                                        completion: ((Bool) -> Void)? = nil) {
         if #available(iOS 15, *) {
-            FrameRateRequest(duration: duration).perform()
+            FrameRateRequest.perform(with: duration)
         }
         UIView.animateKeyframes(withDuration: duration, delay: delay, options: options, animations: animations, completion: completion)
     }
@@ -86,7 +94,7 @@ public final class FrameRateRequest {
                                animations: @escaping () -> Void,
                                completion: ((Bool) -> Void)? = nil) {
          if #available(iOS 15, *) {
-             FrameRateRequest(duration: duration).perform()
+             FrameRateRequest.perform(with: duration)
          }
          UIView.animate(withDuration: duration, delay: delay, usingSpringWithDamping: dampingRatio, initialSpringVelocity: velocity, options: options, animations: animations, completion: completion)
      }
