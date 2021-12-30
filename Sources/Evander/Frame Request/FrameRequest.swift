@@ -60,4 +60,30 @@ public final class FRUIView {
         UIView.animate(withDuration: duration, animations: animations)
     }
     
+    
+    class public func animateKeyframes(withDuration duration: TimeInterval,
+                                       delay: TimeInterval,
+                                       options: UIView.KeyframeAnimationOptions = [],
+                                       animations: @escaping () -> Void,
+                                       completion: ((Bool) -> Void)? = nil) {
+        if #available(iOS 15, *) {
+            FrameRateRequest(duration: duration).perform()
+        }
+        UIView.animateKeyframes(withDuration: duration, delay: delay, options: options, animations: animations, completion: completion)
+    }
+     
+    
+     class public func animate(withDuration duration: TimeInterval,
+                               delay: TimeInterval,
+                               usingSpringWithDamping dampingRatio: CGFloat,
+                               initialSpringVelocity velocity: CGFloat,
+                               options: UIView.AnimationOptions = [],
+                               animations: @escaping () -> Void,
+                               completion: ((Bool) -> Void)? = nil) {
+         if #available(iOS 15, *) {
+             FrameRateRequest(duration: duration).perform()
+         }
+         UIView.animate(withDuration: duration, delay: delay, usingSpringWithDamping: dampingRatio, initialSpringVelocity: velocity, options: options, animations: animations, completion: completion)
+     }
+    
 }
