@@ -35,9 +35,9 @@ public final class FrameRateRequest {
     @objc private func dummyFunction() {}
 }
 
-public final class FRUIView {
+@objc public final class FRUIView: NSObject {
     
-    class public func animate(withDuration duration: TimeInterval,
+    @objc class public func animate(withDuration duration: TimeInterval,
                        delay: TimeInterval,
                        options: UIView.AnimationOptions = [],
                        animations: @escaping () -> Void,
@@ -48,7 +48,7 @@ public final class FRUIView {
         UIView.animate(withDuration: duration, delay: delay, options: options, animations: animations, completion: completion)
     }
     
-    class public func animate(withDuration duration: TimeInterval,
+    @objc class public func animate(withDuration duration: TimeInterval,
                               animations: @escaping () -> Void,
                               completion: ((Bool) -> Void)? = nil) {
         if #available(iOS 15, *) {
@@ -57,7 +57,7 @@ public final class FRUIView {
         UIView.animate(withDuration: duration, animations: animations, completion: completion)
     }
     
-    class public func animate(withDuration duration: TimeInterval,
+    @objc class public func animate(withDuration duration: TimeInterval,
                               animations: @escaping () -> Void) {
         if #available(iOS 15, *) {
             FrameRateRequest(duration: duration).perform()
@@ -66,7 +66,7 @@ public final class FRUIView {
     }
     
     
-    class public func animateKeyframes(withDuration duration: TimeInterval,
+    @objc class public func animateKeyframes(withDuration duration: TimeInterval,
                                        delay: TimeInterval,
                                        options: UIView.KeyframeAnimationOptions = [],
                                        animations: @escaping () -> Void,
@@ -78,7 +78,7 @@ public final class FRUIView {
     }
      
     
-     class public func animate(withDuration duration: TimeInterval,
+    @objc class public func animate(withDuration duration: TimeInterval,
                                delay: TimeInterval,
                                usingSpringWithDamping dampingRatio: CGFloat,
                                initialSpringVelocity velocity: CGFloat,
