@@ -25,7 +25,7 @@ public final class FrameRateRequest {
     static private var shared = FrameRateRequest()
     
     public class func perform(with duration: TimeInterval) {
-        if Thread.isMainThread {
+        if !Thread.isMainThread {
             fatalError("Animations Cannot be Performed from a background thread")
         }
         if remainingTime == 0 {
