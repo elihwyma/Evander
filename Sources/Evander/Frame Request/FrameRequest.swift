@@ -29,13 +29,13 @@ public final class FrameRateRequest {
             fatalError("Animations Cannot be Performed from a background thread")
         }
         if remainingTime == 0 {
-            activeLink.add(to: .current, forMode: .common)
+            activeLink.add(to: .main, forMode: .common)
         }
         remainingTime += duration
         DispatchQueue.main.asyncAfter(deadline: .now() + duration) {
             remainingTime -= duration
             if remainingTime == 0 {
-                activeLink.remove(from: .current, forMode: .common)
+                activeLink.remove(from: .main, forMode: .common)
             }
         }
     }
