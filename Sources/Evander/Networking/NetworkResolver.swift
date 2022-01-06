@@ -236,13 +236,13 @@ final public class EvanderNetworking {
         }.resume()
     }
     
-    class public func request<T: Any>(url: String?, type: T.Type, method: String = "GET", headers: [String: String] = [:], json: [String: AnyHashable]? = nil, multipart: [[String: Data]]? = nil, cache: CacheConfig = .init(), _ completion: @escaping Response<T>) {
+    class public func request<T: Any>(url: String?, type: T.Type, method: String = "GET", headers: [String: String] = [:], json: [String: AnyHashable?]? = nil, multipart: [[String: Data]]? = nil, cache: CacheConfig = .init(), _ completion: @escaping Response<T>) {
         guard let _url = url,
               let url = URL(string: _url) else { return completion(false, nil, nil, nil) }
         request(url: url, type: type, method: method, headers: headers, json: json, multipart: multipart, cache: cache, completion)
     }
     
-    class public func request<T: Any>(url: URL, type: T.Type, method: String = "GET", headers: [String: String] = [:], json: [String: AnyHashable]? = nil, multipart: [[String: Data]]? = nil, cache: CacheConfig = .init(), _ completion: @escaping Response<T>) {
+    class public func request<T: Any>(url: URL, type: T.Type, method: String = "GET", headers: [String: String] = [:], json: [String: AnyHashable?]? = nil, multipart: [[String: Data]]? = nil, cache: CacheConfig = .init(), _ completion: @escaping Response<T>) {
         var request = URLRequest(url: url, timeoutInterval: 30)
         request.httpMethod = method
         for (key, value) in headers {
