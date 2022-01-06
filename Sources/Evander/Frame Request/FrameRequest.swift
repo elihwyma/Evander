@@ -11,7 +11,28 @@ import UIKit
 public final class FrameRateRequest {
     
     static private var remainingTime: TimeInterval = 0
-    static private var activeLink: CADisplayLink = {
+    static private var activeLink: CADisplayLink?
+    static private var shared = FrameRateRequest()
+    
+    public class func perform(with duration: TimeInterval) {
+        if !Thread.isMainThread {
+            fatalError("Animations Cannot be Performed from a background thread")
+        }
+        if activeLink == nil {
+            activeLink = makeLink()
+            activeLink!.add(to: .main, forMode: .common)
+        }
+        remainingTime += duration
+        DispatchQueue.main.asyncAfter(deadline: .now() + duration) {
+            remainingTime -= duration
+            if remainingTime == 0 {
+                activeLink?.invalidate()
+                activeLink = nil
+            }
+        }
+    }
+    
+    private class func makeLink() -> CADisplayLink {
         let max = Float(UIScreen.main.maximumFramesPerSecond)
         var preferredFrameRate: Float = 120
         if preferredFrameRate > max {
@@ -21,23 +42,6 @@ public final class FrameRateRequest {
         let displayLink = CADisplayLink(target: FrameRateRequest.shared, selector: #selector(dummyFunction))
         displayLink.preferredFrameRateRange = frameRateRange
         return displayLink
-    }()
-    static private var shared = FrameRateRequest()
-    
-    public class func perform(with duration: TimeInterval) {
-        if !Thread.isMainThread {
-            fatalError("Animations Cannot be Performed from a background thread")
-        }
-        if remainingTime == 0 {
-            // activeLink.add(to: .main, forMode: .common)
-        }
-        remainingTime += duration
-        DispatchQueue.main.asyncAfter(deadline: .now() + duration) {
-            remainingTime -= duration
-            if remainingTime == 0 {
-                // activeLink.remove(from: .main, forMode: .common)
-            }
-        }
     }
         
     @objc private func dummyFunction() {}
