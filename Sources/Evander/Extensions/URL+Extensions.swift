@@ -29,6 +29,13 @@ public extension URL {
         attributes?[.modificationDate] as? Date
     }
     
+    var symlink: Bool {
+        if let type = attributes?[.type] as? FileAttributeType {
+            return type == .typeSymbolicLink
+        }
+        return false
+    }
+    
     var exists: Bool {
         FileManager.default.fileExists(atPath: path)
     }
@@ -48,4 +55,3 @@ public extension URL {
     }
 }
 
-// Fiore says hi
