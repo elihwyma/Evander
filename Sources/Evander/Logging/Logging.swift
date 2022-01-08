@@ -7,6 +7,6 @@
 
 import Foundation
 
-func EVLog(_ log: Any, separator: String = " ", terminator: String = "\n", file: String = #fileID, lineNumber: Int = #line, function: String = #function) {
+public func EVLog(_ log: Any, separator: String = " ", terminator: String = "\n", file: String = #fileID, lineNumber: Int = #line, function: String = #function) {
     print("[\(file)/\(lineNumber)/\(function)] \(log)", separator: separator, terminator: terminator)
 }
