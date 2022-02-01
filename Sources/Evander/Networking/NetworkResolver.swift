@@ -236,13 +236,13 @@ final public class EvanderNetworking {
         }.resume()
     }
     
-    class public func request<T: Any>(url: String?, type: T.Type, method: String = "GET", headers: [String: String] = [:], json: [String: AnyHashable?]? = nil, multipart: [[String: Data]]? = nil, cache: CacheConfig = .init(), _ completion: @escaping Response<T>) {
+    class public func request<T: Any>(url: String?, type: T.Type, method: String = "GET", headers: [String: String] = [:], json: [String: AnyHashable?]? = nil, multipart: [[String: Data]]? = nil, form: [String: AnyHashable]? = nil, cache: CacheConfig = .init(), _ completion: @escaping Response<T>) {
         guard let _url = url,
               let url = URL(string: _url) else { return completion(false, nil, nil, nil) }
-        request(url: url, type: type, method: method, headers: headers, json: json, multipart: multipart, cache: cache, completion)
+        request(url: url, type: type, method: method, headers: headers, json: json, multipart: multipart, form: form, cache: cache, completion)
     }
     
-    class public func request<T: Any>(url: URL, type: T.Type, method: String = "GET", headers: [String: String] = [:], json: [String: AnyHashable?]? = nil, multipart: [[String: Data]]? = nil, cache: CacheConfig = .init(), _ completion: @escaping Response<T>) {
+    class public func request<T: Any>(url: URL, type: T.Type, method: String = "GET", headers: [String: String] = [:], json: [String: AnyHashable?]? = nil, multipart: [[String: Data]]? = nil, form: [String: AnyHashable]? = nil, cache: CacheConfig = .init(), _ completion: @escaping Response<T>) {
         var request = URLRequest(url: url, timeoutInterval: 30)
         request.httpMethod = method
         for (key, value) in headers {
@@ -278,6 +278,10 @@ final public class EvanderNetworking {
                   let jsonData = try? JSONSerialization.data(withJSONObject: json, options: .prettyPrinted) {
            request.httpBody = jsonData
            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        } else if let form = form {
+            request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+            let bodyString = form.map { "\($0.key)=\($0.value)" }.joined(separator: "&")
+            request.httpBody = bodyString.data(using: .utf8)
         }
         Self.request(request: request, type: type, cache: cache, completion)
     }
