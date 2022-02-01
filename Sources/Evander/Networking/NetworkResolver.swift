@@ -280,7 +280,9 @@ final public class EvanderNetworking {
            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         } else if let form = form {
             request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
-            let bodyString = form.map { "\($0.key)=\($0.value)" }.joined(separator: "&")
+            guard let bodyString = form.map { "\($0.key)=\($0.value)" }.joined(separator: "&").addingPercentEncoding(withAllowedCharacters: .urlHostAllowed) else {
+                return completion(false, nil, nil, nil)
+            }
             request.httpBody = bodyString.data(using: .utf8)
         }
         Self.request(request: request, type: type, cache: cache, completion)
