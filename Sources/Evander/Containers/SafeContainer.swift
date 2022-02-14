@@ -183,6 +183,16 @@ final public class SafeArray<Element> {
         }
     }
     
+    @discardableResult public func remove(at index: Int) -> Element?  {
+        if !isOnQueue {
+            var element: Element?
+            queue.sync { element = self.array.remove(at: index) }
+            return element!
+        } else {
+            return array.remove(at: index)
+        }
+    }
+    
     public func removeFirst() -> Element {
         if !isOnQueue {
             var element: Element?
@@ -216,15 +226,7 @@ final public class SafeArray<Element> {
             return array.map(transform)
         }
     }
-    
-    public func remove(at index: Int) {
-        if !isOnQueue {
-            queue.async(flags: .barrier) { [self] in array.remove(at: index) }
-        } else {
-            array.remove(at: index)
-        }
-    }
-    
+
     public func removeAll(where shouldBeRemoved: (Element) throws -> Bool) rethrows {
         if !isOnQueue {
             queue.sync { [self] in try? array.removeAll(where: shouldBeRemoved) }
@@ -452,11 +454,13 @@ final public class SafeContiguousArray<Element> {
         }
     }
     
-    public func remove(at index: Int) {
+    @discardableResult public func remove(at index: Int) -> Element?  {
         if !isOnQueue {
-            queue.async(flags: .barrier) { [self] in array.remove(at: index) }
+            var element: Element?
+            queue.sync { element = self.array.remove(at: index) }
+            return element!
         } else {
-            array.remove(at: index)
+            return array.remove(at: index)
         }
     }
     
