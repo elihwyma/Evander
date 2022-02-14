@@ -22,6 +22,28 @@ final public class SafeArray<Element> {
         self.context = context
     }
     
+    subscript(index: Int) -> Element? {
+        get {
+            if !isOnQueue {
+                var result: Element?
+                queue.sync { result = self.array[index] }
+                return result
+            } else {
+                return array[index]
+            }
+        }
+        set {
+            guard let newValue = newValue else { return }
+            if !isOnQueue {
+                queue.async(flags: .barrier) {
+                    self.array[index] = newValue
+                }
+            } else {
+                array[index] = newValue
+            }
+        }
+    }
+    
     public var count: Int {
         if !isOnQueue {
             var result = 0
@@ -70,6 +92,26 @@ final public class SafeArray<Element> {
     
     public func enumerated() -> EnumeratedSequence<[Element]> {
         raw.enumerated()
+    }
+    
+    public var first: Element? {
+        if !isOnQueue {
+            var first: Element? = nil
+            queue.sync { first = self.array.first }
+            return first
+        } else {
+            return array.first
+        }
+    }
+    
+    public var last: Element? {
+        if !isOnQueue {
+            var last: Element? = nil
+            queue.sync { last = self.array.last }
+            return last
+        } else {
+            return array.last
+        }
     }
     
     public func append(_ element: Element) {
@@ -186,6 +228,28 @@ final public class SafeContiguousArray<Element> {
         self.context = context
     }
     
+    subscript(index: Int) -> Element? {
+        get {
+            if !isOnQueue {
+                var result: Element?
+                queue.sync { result = self.array[index] }
+                return result
+            } else {
+                return array[index]
+            }
+        }
+        set {
+            guard let newValue = newValue else { return }
+            if !isOnQueue {
+                queue.async(flags: .barrier) {
+                    self.array[index] = newValue
+                }
+            } else {
+                array[index] = newValue
+            }
+        }
+    }
+    
     public var count: Int {
         if !isOnQueue {
             var result = 0
@@ -220,6 +284,26 @@ final public class SafeContiguousArray<Element> {
             return result
         }
         return array.contains(where: element)
+    }
+    
+    public var first: Element? {
+        if !isOnQueue {
+            var first: Element? = nil
+            queue.sync { first = self.array.first }
+            return first
+        } else {
+            return array.first
+        }
+    }
+    
+    public var last: Element? {
+        if !isOnQueue {
+            var last: Element? = nil
+            queue.sync { last = self.array.last }
+            return last
+        } else {
+            return array.last
+        }
     }
     
     public func setTo(_ element: ContiguousArray<Element>) {
