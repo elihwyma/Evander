@@ -22,18 +22,17 @@ final public class SafeArray<Element> {
         self.context = context
     }
     
-    public subscript(index: Int) -> Element? {
+    public subscript(index: Int) -> Element {
         get {
             if !isOnQueue {
                 var result: Element?
                 queue.sync { result = self.array[index] }
-                return result
+                return result!
             } else {
                 return array[index]
             }
         }
         set {
-            guard let newValue = newValue else { return }
             if !isOnQueue {
                 queue.async(flags: .barrier) {
                     self.array[index] = newValue
@@ -228,18 +227,17 @@ final public class SafeContiguousArray<Element> {
         self.context = context
     }
     
-    public subscript(index: Int) -> Element? {
+    public subscript(index: Int) -> Element {
         get {
             if !isOnQueue {
                 var result: Element?
                 queue.sync { result = self.array[index] }
-                return result
+                return result!
             } else {
                 return array[index]
             }
         }
         set {
-            guard let newValue = newValue else { return }
             if !isOnQueue {
                 queue.async(flags: .barrier) {
                     self.array[index] = newValue
