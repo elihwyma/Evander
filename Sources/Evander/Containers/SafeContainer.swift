@@ -183,7 +183,7 @@ final public class SafeArray<Element> {
         }
     }
     
-    @discardableResult public func remove(at index: Int) -> Element?  {
+    @discardableResult public func remove(at index: Int) -> Element  {
         if !isOnQueue {
             var element: Element?
             queue.sync { element = self.array.remove(at: index) }
@@ -454,7 +454,7 @@ final public class SafeContiguousArray<Element> {
         }
     }
     
-    @discardableResult public func remove(at index: Int) -> Element?  {
+    @discardableResult public func remove(at index: Int) -> Element  {
         if !isOnQueue {
             var element: Element?
             queue.sync { element = self.array.remove(at: index) }
