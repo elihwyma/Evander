@@ -22,7 +22,7 @@ final public class SafeArray<Element> {
         self.context = context
     }
     
-    subscript(index: Int) -> Element? {
+    public subscript(index: Int) -> Element? {
         get {
             if !isOnQueue {
                 var result: Element?
@@ -228,7 +228,7 @@ final public class SafeContiguousArray<Element> {
         self.context = context
     }
     
-    subscript(index: Int) -> Element? {
+    public subscript(index: Int) -> Element? {
         get {
             if !isOnQueue {
                 var result: Element?
