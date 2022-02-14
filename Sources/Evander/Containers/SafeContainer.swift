@@ -43,6 +43,46 @@ final public class SafeArray<Element> {
         }
     }
     
+    public func first(where predicate: (Element) -> Bool) -> Element? {
+        if !isOnQueue {
+            var result: Element?
+            queue.sync { result = self.array.first(where: predicate) }
+            return result
+        } else {
+            return array.first(where: predicate)
+        }
+    }
+    
+    public func last(where predicate: (Element) -> Bool) -> Element? {
+        if !isOnQueue {
+            var result: Element?
+            queue.sync { result = self.array.last(where: predicate) }
+            return result
+        } else {
+            return array.last(where: predicate)
+        }
+    }
+    
+    public func firstIndex(where predicate: (Element) -> Bool) -> Int? {
+        if !isOnQueue {
+            var result: Int?
+            queue.sync { result = self.array.firstIndex(where: predicate) }
+            return result
+        } else {
+            return array.firstIndex(where: predicate)
+        }
+    }
+    
+    public func lastIndex(where predicate: (Element) -> Bool) -> Int? {
+        if !isOnQueue {
+            var result: Int?
+            queue.sync { result = self.array.lastIndex(where: predicate) }
+            return result
+        } else {
+            return array.lastIndex(where: predicate)
+        }
+    }
+    
     public var count: Int {
         if !isOnQueue {
             var result = 0
@@ -282,6 +322,46 @@ final public class SafeContiguousArray<Element> {
             return result
         }
         return array.contains(where: element)
+    }
+    
+    public func first(where predicate: (Element) -> Bool) -> Element? {
+        if !isOnQueue {
+            var result: Element?
+            queue.sync { result = self.array.first(where: predicate) }
+            return result
+        } else {
+            return array.first(where: predicate)
+        }
+    }
+    
+    public func last(where predicate: (Element) -> Bool) -> Element? {
+        if !isOnQueue {
+            var result: Element?
+            queue.sync { result = self.array.last(where: predicate) }
+            return result
+        } else {
+            return array.last(where: predicate)
+        }
+    }
+    
+    public func firstIndex(where predicate: (Element) -> Bool) -> Int? {
+        if !isOnQueue {
+            var result: Int?
+            queue.sync { result = self.array.firstIndex(where: predicate) }
+            return result
+        } else {
+            return array.firstIndex(where: predicate)
+        }
+    }
+    
+    public func lastIndex(where predicate: (Element) -> Bool) -> Int? {
+        if !isOnQueue {
+            var result: Int?
+            queue.sync { result = self.array.lastIndex(where: predicate) }
+            return result
+        } else {
+            return array.lastIndex(where: predicate)
+        }
     }
     
     public var first: Element? {
