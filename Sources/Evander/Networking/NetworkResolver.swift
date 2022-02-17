@@ -330,6 +330,8 @@ final public class EvanderNetworking {
                     memoryCache.setObject(image, forKey: encoded as NSString)
                     if cache.skipNetwork && Self.skipNetwork(path) {
                         return image
+                    } else {
+                        completion(image)
                     }
                 } else {
                     completion(image)
