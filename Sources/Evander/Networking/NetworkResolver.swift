@@ -58,8 +58,23 @@ final public class EvanderNetworking {
         }
     }
     
-    public static var memoryCache = NSCache<NSString, UIImage>()
+    public static var memoryCache = NSCache<ImageObject, UIImage>()
     private static var callbackCache = NSCache<NSURL, Callback>()
+    
+    public class ImageObject: Equatable {
+        
+        private var url: String
+        private var size: CGSize?
+        
+        init(url: String, size: CGSize?) {
+            self.url = url
+            self.size = size
+        }
+        
+        static public func ==(lhs: ImageObject, rhs: ImageObject) -> Bool {
+            lhs.url == rhs.url && lhs.size == rhs.size
+        }
+    }
 
     
     public class func clearCache() {
@@ -306,14 +321,14 @@ final public class EvanderNetworking {
     
     public class func image(url: URL?, method: String = "GET", headers: [String: String] = [:], cache: CacheConfig = .init(localCache: true, skipNetwork: true), scale: CGFloat? = nil, size: CGSize? = nil, _ completion: @escaping (UIImage) -> Void) -> UIImage? {
         guard let url = url else { return nil }
-        let encoded = url.absoluteString.toBase64
-        if cache.localCache || cache.skipNetwork,
-           let image = memoryCache.object(forKey: encoded as NSString) {
-            return image
-        }
         var size = size
         if size?.height == 0 || size?.width == 0 {
             size = nil
+        }
+        let encoded = url.absoluteString.toBase64
+        if cache.localCache || cache.skipNetwork,
+           let image = memoryCache.object(forKey: ImageObject(url: encoded, size: size)) {
+            return image
         }
         
         func work() -> UIImage? {
@@ -328,7 +343,7 @@ final public class EvanderNetworking {
             if path.exists,
                let image = ImageProcessing.downsample(url: path, to: size, scale: scale) {
                 if cache.localCache || cache.skipNetwork {
-                    memoryCache.setObject(image, forKey: encoded as NSString)
+                    memoryCache.setObject(image, forKey: ImageObject(url: encoded, size: size))
                     if cache.skipNetwork && Self.skipNetwork(path) {
                         return image
                     }
@@ -352,7 +367,7 @@ final public class EvanderNetworking {
                     } else {
                         completion(image)
                     }
-                    memoryCache.setObject(image, forKey: encoded as NSString)
+                    memoryCache.setObject(image, forKey: ImageObject(url: encoded, size: size))
                     try? image.pngData()?.write(to: path)
                 }
             }
@@ -442,7 +457,7 @@ final public class EvanderNetworking {
         var returnImage: UIImage?
         let encoded = url.absoluteString.toBase64
         if cache,
-           let image = memoryCache.object(forKey: encoded as NSString) {
+           let image = memoryCache.object(forKey: ImageObject(url: encoded, size: size)) {
             return image
         }
         let path = mediaCache.appendingPathComponent("\(encoded).gif")
@@ -450,7 +465,7 @@ final public class EvanderNetworking {
             if let data = try? Data(contentsOf: path) {
                 if let image = EvanderGIF(data: data, size: size, scale: scale) {
                     if cache {
-                        memoryCache.setObject(image, forKey: encoded as NSString)
+                        memoryCache.setObject(image, forKey: ImageObject(url: encoded, size: size))
                         pastData = data
                         if Self.skipNetwork(path) {
                             return image
@@ -473,7 +488,7 @@ final public class EvanderNetworking {
                let image = EvanderGIF(data: data, size: size, scale: scale) {
                 completion?(pastData != data, image)
                 if cache {
-                    memoryCache.setObject(image, forKey: encoded as NSString)
+                    memoryCache.setObject(image, forKey: ImageObject(url: encoded, size: size))
                     do {
                         if !mediaCache.dirExists {
                             try FileManager.default.createDirectory(at: mediaCache, withIntermediateDirectories: true)
@@ -508,7 +523,7 @@ final public class EvanderNetworking {
         }
         let encoded = url.absoluteString.toBase64
         let path = mediaCache.appendingPathComponent("\(encoded).png")
-        if let memory = memoryCache.object(forKey: encoded as NSString) {
+        if let memory = memoryCache.object(forKey: ImageObject(url: encoded, size: size)) {
             return (!Self.skipNetwork(path), memory)
         }
         if path.exists {

@@ -7,6 +7,7 @@
 
 import UIKit
 
+#if swift(>=5.5)
 @available(iOS 15, *)
 public final class FrameRateRequest {
     
@@ -46,6 +47,7 @@ public final class FrameRateRequest {
         
     @objc private func dummyFunction() {}
 }
+#endif
 
 @objc public final class FRUIView: NSObject {
     
@@ -54,26 +56,32 @@ public final class FrameRateRequest {
                        options: UIView.AnimationOptions = [],
                        animations: @escaping () -> Void,
                        completion: ((Bool) -> Void)? = nil) {
+        #if swift(>=5.5)
         if #available(iOS 15, *) {
             FrameRateRequest.perform(with: duration)
         }
+        #endif
         UIView.animate(withDuration: duration, delay: delay, options: options, animations: animations, completion: completion)
     }
     
     @objc class public func animate(withDuration duration: TimeInterval,
                               animations: @escaping () -> Void,
                               completion: ((Bool) -> Void)? = nil) {
+        #if swift(>=5.5)
         if #available(iOS 15, *) {
             FrameRateRequest.perform(with: duration)
         }
+        #endif
         UIView.animate(withDuration: duration, animations: animations, completion: completion)
     }
     
     @objc class public func animate(withDuration duration: TimeInterval,
                               animations: @escaping () -> Void) {
+        #if swift(>=5.5)
         if #available(iOS 15, *) {
             FrameRateRequest.perform(with: duration)
         }
+        #endif
         UIView.animate(withDuration: duration, animations: animations)
     }
     
@@ -83,9 +91,11 @@ public final class FrameRateRequest {
                                        options: UIView.KeyframeAnimationOptions = [],
                                        animations: @escaping () -> Void,
                                        completion: ((Bool) -> Void)? = nil) {
+        #if swift(>=5.5)
         if #available(iOS 15, *) {
             FrameRateRequest.perform(with: duration)
         }
+        #endif
         UIView.animateKeyframes(withDuration: duration, delay: delay, options: options, animations: animations, completion: completion)
     }
      
@@ -97,10 +107,12 @@ public final class FrameRateRequest {
                                options: UIView.AnimationOptions = [],
                                animations: @escaping () -> Void,
                                completion: ((Bool) -> Void)? = nil) {
-         if #available(iOS 15, *) {
-             FrameRateRequest.perform(with: duration)
-         }
-         UIView.animate(withDuration: duration, delay: delay, usingSpringWithDamping: dampingRatio, initialSpringVelocity: velocity, options: options, animations: animations, completion: completion)
+        #if swift(>=5.5)
+        if #available(iOS 15, *) {
+            FrameRateRequest.perform(with: duration)
+        }
+        #endif
+        UIView.animate(withDuration: duration, delay: delay, usingSpringWithDamping: dampingRatio, initialSpringVelocity: velocity, options: options, animations: animations, completion: completion)
      }
     
 }
