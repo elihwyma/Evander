@@ -144,7 +144,7 @@ final public class EvanderNetworking {
             for content in combined {
                 guard let attr = try? FileManager.default.attributesOfItem(atPath: content.path),
                       let date = attr[FileAttributeKey.modificationDate] as? Date else { continue }
-                if Date(timeIntervalSince1970: Date().timeIntervalSince1970 - 604800) > date {
+                if Date(timeIntervalSince1970: Date().timeIntervalSince1970 - 2592000) > date {
                     try? FileManager.default.removeItem(atPath: content.path)
                 }
             }
@@ -167,8 +167,7 @@ final public class EvanderNetworking {
     }
 
     class private func skipNetwork(_ url: URL) -> Bool {
-        if let attr = try? FileManager.default.attributesOfItem(atPath: url.path),
-           let date = attr[FileAttributeKey.modificationDate] as? Date {
+        if let date = url.attributes?[.modificationDate] as? Date {
             var yes = DateComponents()
             yes.day = -1
             let yesterday = Calendar.current.date(byAdding: yes, to: Date()) ?? Date()
@@ -346,6 +345,8 @@ final public class EvanderNetworking {
                     memoryCache.setObject(image, forKey: ImageObject(url: encoded, size: size))
                     if cache.skipNetwork && Self.skipNetwork(path) {
                         return image
+                    } else {
+                        completion(image)
                     }
                 } else {
                     completion(image)
