@@ -31,21 +31,30 @@ public extension UIView {
         ])
     }
     
-    func pinTo(view: UIView, top: CGFloat = 0, bottom: CGFloat = 0, leading: CGFloat = 0, trailing: CGFloat = 0) {
-        NSLayoutConstraint.activate([
+    func constraintsPinningTo(view: UIView, top: CGFloat = 0, bottom: CGFloat = 0, leading: CGFloat = 0, trailing: CGFloat = 0) -> [NSLayoutConstraint] {
+        return [
             topAnchor.constraint(equalTo: view.topAnchor, constant: top),
             leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: leading),
             trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: trailing),
             bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: bottom)
-        ])
+        ]
     }
     
-    func pinTo(guide: UILayoutGuide, top: CGFloat = 0, bottom: CGFloat = 0, leading: CGFloat = 0, trailing: CGFloat = 0) {
-        NSLayoutConstraint.activate([
+    func constraintsPinningTo(guide: UILayoutGuide, top: CGFloat = 0, bottom: CGFloat = 0, leading: CGFloat = 0, trailing: CGFloat = 0) -> [NSLayoutConstraint] {
+        return [
             topAnchor.constraint(equalTo: guide.topAnchor, constant: top),
             leadingAnchor.constraint(equalTo: guide.leadingAnchor, constant: leading),
             trailingAnchor.constraint(equalTo: guide.trailingAnchor, constant: trailing),
             bottomAnchor.constraint(equalTo: guide.bottomAnchor, constant: bottom)
-        ])
+        ]
     }
+    
+    func pinTo(view: UIView, top: CGFloat = 0, bottom: CGFloat = 0, leading: CGFloat = 0, trailing: CGFloat = 0) {
+        NSLayoutConstraint.activate(constraintsPinningTo(view: view, top: top, bottom: bottom, leading: leading, trailing: trailing))
+    }
+    
+    func pinTo(guide: UILayoutGuide, top: CGFloat = 0, bottom: CGFloat = 0, leading: CGFloat = 0, trailing: CGFloat = 0) {
+        NSLayoutConstraint.activate(constraintsPinningTo(guide: guide, top: top, bottom: bottom, leading: leading, trailing: trailing))
+    }
+
 }
