@@ -29,6 +29,23 @@ public extension UIView {
             centerXAnchor.constraint(equalTo: superview.centerXAnchor),
             centerYAnchor.constraint(equalTo: superview.centerYAnchor)
         ])
-        
+    }
+    
+    func pinTo(view: UIView, top: CGFloat = 0, bottom: CGFloat = 0, leading: CGFloat = 0, trailing: CGFloat = 0) {
+        NSLayoutConstraint.activate([
+            topAnchor.constraint(equalTo: view.topAnchor, constant: top),
+            leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: leading),
+            trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: trailing),
+            bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: bottom)
+        ])
+    }
+    
+    func pinTo(guide: UILayoutGuide, top: CGFloat = 0, bottom: CGFloat = 0, leading: CGFloat = 0, trailing: CGFloat = 0) {
+        NSLayoutConstraint.activate([
+            topAnchor.constraint(equalTo: guide.topAnchor, constant: top),
+            leadingAnchor.constraint(equalTo: guide.leadingAnchor, constant: leading),
+            trailingAnchor.constraint(equalTo: guide.trailingAnchor, constant: trailing),
+            bottomAnchor.constraint(equalTo: guide.bottomAnchor, constant: bottom)
+        ])
     }
 }
