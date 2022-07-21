@@ -183,13 +183,11 @@ final public class SafeArray<Element> {
         }
     }
     
-    @discardableResult public func remove(at index: Int) -> Element  {
+    public func remove(at index: Int)  {
         if !isOnQueue {
-            var element: Element?
-            queue.sync { element = self.array.remove(at: index) }
-            return element!
+            queue.async(flags: .barrier) { self.array.remove(at: index) }
         } else {
-            return array.remove(at: index)
+            array.remove(at: index)
         }
     }
     
@@ -454,13 +452,11 @@ final public class SafeContiguousArray<Element> {
         }
     }
     
-    @discardableResult public func remove(at index: Int) -> Element  {
+    public func remove(at index: Int) {
         if !isOnQueue {
-            var element: Element?
-            queue.sync { element = self.array.remove(at: index) }
-            return element!
+            queue.async(flags: .barrier) { self.array.remove(at: index) }
         } else {
-            return array.remove(at: index)
+            array.remove(at: index)
         }
     }
     
@@ -518,13 +514,11 @@ final public class SafeSet<Element: Hashable> {
         }
     }
     
-    @discardableResult public func insert(_ newMember: Element) -> (inserted: Bool, memberAfterInsert: Element) {
+    public func insert(_ newMember: Element) {
         if !isOnQueue {
-            var result: (inserted: Bool, memberAfterInsert: Element)?
-            queue.sync { result = self.set.insert(newMember) }
-            return result!
+            queue.async(flags: .barrier) { self.set.insert(newMember) }
         }
-        return set.insert(newMember)
+        set.insert(newMember)
     }
     
     public func filter(_ isIncluded: (Element) throws -> Bool) rethrows -> Set<Element> {
@@ -610,13 +604,11 @@ final public class SafeSet<Element: Hashable> {
         return try self.set.map(transform)
     }
     
-    @discardableResult public func remove(_ member: Element) -> Element? {
+    public func remove(_ member: Element) {
         if !isOnQueue {
-            var result: Element?
-            queue.sync { result = self.set.remove(member) }
-            return result
+            queue.async(flags: .barrier) { self.set.remove(member) }
         }
-        return set.remove(member)
+        set.remove(member)
     }
     
     public func remove(_ element: @escaping (Element) -> Bool) {
