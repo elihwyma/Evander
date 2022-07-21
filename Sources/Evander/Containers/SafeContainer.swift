@@ -536,6 +536,15 @@ final public class SafeSet<Element: Hashable> {
         return try set.filter(isIncluded)
     }
     
+    public var raw: Set<Element> {
+        if !isOnQueue {
+            var result = Set<Element>()
+            queue.sync { result = self.set }
+            return result
+        }
+        return set
+    }
+    
     public var count: Int {
         if !isOnQueue {
             var result = 0
@@ -590,6 +599,15 @@ final public class SafeSet<Element: Hashable> {
             return result
         }
         return try self.set.contains(where: predicate)
+    }
+    
+    public func map<T>(_ transform: (Element) throws -> T) rethrows -> [T] {
+        if !isOnQueue {
+            var result = [T]()
+            try queue.sync { result = try self.set.map(transform) }
+            return result
+        }
+        return try self.set.map(transform)
     }
     
 }
