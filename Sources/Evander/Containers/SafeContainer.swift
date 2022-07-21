@@ -619,6 +619,20 @@ final public class SafeSet<Element: Hashable> {
         return set.remove(member)
     }
     
+    public func remove(_ element: @escaping (Element) -> Bool) {
+        if !isOnQueue {
+            queue.async(flags: .barrier) {
+                if let index = self.set.first(where: element) {
+                    self.set.remove(index)
+                }
+            }
+        } else {
+            if let index = self.set.first(where: element) {
+                self.set.remove(index)
+            }
+        }
+    }
+    
 }
 
 // MARK: SafeDictionary
