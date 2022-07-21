@@ -489,6 +489,111 @@ public extension SafeContiguousArray where Element: Equatable {
     }
 }
 
+final public class SafeSet<Element: Hashable> {
+    
+    private var set: Set<Element>
+    private let queue: DispatchQueue
+    private let key: DispatchSpecificKey<Int>
+    private let context: Int
+    
+    public var isOnQueue: Bool {
+        DispatchQueue.getSpecific(key: key) == context
+    }
+    
+    public init(_ set: Set<Element> = [], queue: DispatchQueue, key: DispatchSpecificKey<Int>, context: Int) {
+        self.set = set
+        self.queue = queue
+        self.key = key
+        self.context = context
+    }
+    
+    subscript(position: Set<Element>.Index) -> Element {
+        get {
+            if !isOnQueue {
+                var result: Element?
+                queue.sync { result = self.set[position] }
+                return result!
+            }
+            return set[position]
+        }
+    }
+    
+    @discardableResult public func insert(_ newMember: Element) -> (inserted: Bool, memberAfterInsert: Element) {
+        if !isOnQueue {
+            var result: (inserted: Bool, memberAfterInsert: Element)?
+            queue.sync { result = self.set.insert(newMember) }
+            return result!
+        }
+        return set.insert(newMember)
+    }
+    
+    public func filter(_ isIncluded: (Element) throws -> Bool) rethrows -> Set<Element> {
+        if !isOnQueue {
+            var result: Set<Element>?
+            try queue.sync { result = try self.set.filter(isIncluded) }
+            return result!
+        }
+        return try set.filter(isIncluded)
+    }
+    
+    public var count: Int {
+        if !isOnQueue {
+            var result = 0
+            queue.sync { result = self.set.count }
+            return result
+        }
+        return set.count
+    }
+    
+    public var isEmpty: Bool {
+        if !isOnQueue {
+            var result = false
+            queue.sync { result = self.set.isEmpty }
+            return result
+        }
+        return set.isEmpty
+    }
+    
+    public func contains(_ element: Element) -> Bool {
+        if !isOnQueue {
+            var result = false
+            queue.sync { result = self.set.contains(element) }
+            return result
+        }
+        return self.set.contains(element)
+    }
+    
+    public func removeAll() {
+        if !isOnQueue {
+            queue.async(flags: .barrier) {
+                self.set.removeAll()
+            }
+        } else {
+            self.set.removeAll()
+        }
+    }
+    
+    public func formUnion<S>(_ other: S) where Element == S.Element, S : Sequence {
+        if !isOnQueue {
+            queue.async(flags: .barrier) {
+                self.set.formUnion(other)
+            }
+        } else {
+            self.set.formUnion(other)
+        }
+    }
+    
+    public func contains(where predicate: (Element) throws -> Bool) rethrows -> Bool {
+        if !isOnQueue {
+            var result = false
+            try queue.sync { result = try self.set.contains(where: predicate) }
+            return result
+        }
+        return try self.set.contains(where: predicate)
+    }
+    
+}
+
 // MARK: SafeDictionary
 final public class SafeDictionary<Key: Hashable, Value> {
     public typealias Element = (key: Key, value: Value)
