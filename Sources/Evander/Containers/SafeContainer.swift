@@ -633,6 +633,16 @@ final public class SafeSet<Element: Hashable> {
         }
     }
     
+    public func setTo(_ element: Set<Element>) {
+        if !isOnQueue {
+            queue.async(flags: .barrier) {
+                self.set = element
+            }
+        } else {
+            self.set = element
+        }
+    }
+    
 }
 
 // MARK: SafeDictionary
