@@ -610,6 +610,15 @@ final public class SafeSet<Element: Hashable> {
         return try self.set.map(transform)
     }
     
+    @discardableResult public func remove(_ member: Element) -> Element? {
+        if !isOnQueue {
+            var result: Element?
+            queue.sync { result = self.set.remove(member) }
+            return result
+        }
+        return set.remove(member)
+    }
+    
 }
 
 // MARK: SafeDictionary
