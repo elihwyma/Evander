@@ -517,8 +517,9 @@ final public class SafeSet<Element: Hashable> {
     public func insert(_ newMember: Element) {
         if !isOnQueue {
             queue.async(flags: .barrier) { self.set.insert(newMember) }
+        } else {
+            set.insert(newMember)
         }
-        set.insert(newMember)
     }
     
     public func filter(_ isIncluded: (Element) throws -> Bool) rethrows -> Set<Element> {
@@ -607,8 +608,9 @@ final public class SafeSet<Element: Hashable> {
     public func remove(_ member: Element) {
         if !isOnQueue {
             queue.async(flags: .barrier) { self.set.remove(member) }
+        } else {
+            set.remove(member)
         }
-        set.remove(member)
     }
     
     public func remove(_ element: @escaping (Element) -> Bool) {
