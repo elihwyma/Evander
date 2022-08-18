@@ -536,7 +536,7 @@ final public class EvanderNetworking {
     }
 }
 
-extension Data {
+public extension Data {
     
     mutating func addMultiPart(boundary: String, name: String, filename: String, contentType: String, data: Data) {
         append("\r\n--\(boundary)\r\n".data(using: .utf8)!)
