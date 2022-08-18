@@ -294,7 +294,7 @@ final public class EvanderNetworking {
            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         } else if let form = form {
             request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
-            guard let bodyString = form.map { "\($0.key)=\($0.value)" }.joined(separator: "&").addingPercentEncoding(withAllowedCharacters: .urlHostAllowed) else {
+            guard let bodyString = form.map({ "\($0.key)=\($0.value)" }).joined(separator: "&").addingPercentEncoding(withAllowedCharacters: .urlHostAllowed) else {
                 return completion(false, nil, nil, nil)
             }
             request.httpBody = bodyString.data(using: .utf8)
@@ -536,7 +536,7 @@ final public class EvanderNetworking {
     }
 }
 
-fileprivate extension Data {
+extension Data {
     
     mutating func addMultiPart(boundary: String, name: String, filename: String, contentType: String, data: Data) {
         append("\r\n--\(boundary)\r\n".data(using: .utf8)!)
