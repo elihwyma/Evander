@@ -160,7 +160,7 @@ final public class EvanderNetworking {
         public var localCache: Bool
         public var skipNetwork: Bool
         
-        public init(localCache: Bool = true, skipNetwork: Bool = false) {
+        public init(localCache: Bool = false, skipNetwork: Bool = false) {
             self.localCache = localCache
             self.skipNetwork = skipNetwork
         }
@@ -189,6 +189,7 @@ final public class EvanderNetworking {
     }
     
     public typealias Response<T: Any> = ((Bool, Int?, Error?, T?) -> Void)
+    public typealias DecodableResponse<T: Decodable> = ((Bool, Int?, Error?, T?) -> Void)
     
     class public func request<T: Any>(request: URLRequest, type: T.Type, cache: CacheConfig = .init(), _ completion: @escaping Response<T>) {
         var cachedData: Data?
@@ -248,6 +249,112 @@ final public class EvanderNetworking {
             }
             return completion(success, statusCode, error, returnData)
         }.resume()
+    }
+    
+    class public func request<T: Decodable>(request: URLRequest, type: T.Type, cache: CacheConfig = .init(), _ completion: @escaping DecodableResponse<T>) {
+        var cachedData: Data?
+        guard let url = request.url else { return completion(false, nil, nil, nil) }
+        let encoded = url.absoluteString.toBase64
+        let path = Self.networkCache.appendingPathComponent("\(encoded).json")
+        
+        if cache.localCache {
+            if let data = try? Data(contentsOf: path) {
+                if T.self == Data.self {
+                    if cache.skipNetwork && skipNetwork(path) {
+                        return completion(true, nil, nil, data as? T)
+                    } else {
+                        cachedData = data
+                        completion(true, nil, nil, data as? T)
+                    }
+                } else {
+                    if let decoded = try? JSONDecoder().decode(T.self, from: data) {
+                        if cache.skipNetwork && skipNetwork(path) {
+                            return completion(true, nil, nil, decoded)
+                        } else {
+                            cachedData = data
+                            completion(true, nil, nil, decoded)
+                        }
+                    }
+                }
+            }
+        }
+        URLSession.shared.dataTask(with: request) { data, response, error -> Void in
+            let statusCode = (response as? HTTPURLResponse)?.statusCode
+            if ENABLE_COOKIES {
+                if let httpResponse = response as? HTTPURLResponse,
+                   let dict = httpResponse.allHeaderFields as? [String: String],
+                   let url = response?.url {
+                    let cookies = HTTPCookie.cookies(withResponseHeaderFields: dict, for: url)
+                    HTTPCookieStorage.shared.setCookies(cookies, for: url, mainDocumentURL: nil)
+                }
+            }
+            var returnData: T?
+            var success: Bool = false
+            if let data = data {
+                if T.self == Data.self {
+                    returnData = data as? T
+                    success = true
+                    if cache.localCache {
+                        try? data.write(to: path, options: .atomic)
+                    }
+                    if cachedData == data { return }
+                } else if let decoded = try? JSONDecoder().decode(T.self, from: data) {
+                    returnData = decoded
+                    success = true
+                    if cache.localCache {
+                        try? data.write(to: path, options: .atomic)
+                    }
+                    if cachedData == data { return }
+                }
+            }
+            return completion(success, statusCode, error, returnData)
+        }.resume()
+    }
+    
+    class public func request<T: Decodable>(url: URL, type: T.Type, method: String = "GET", headers: [String: String] = [:], json: [String: AnyHashable?]? = nil, multipart: [[String: Data]]? = nil, form: [String: AnyHashable]? = nil, cache: CacheConfig = .init(), _ completion: @escaping DecodableResponse<T>) {
+        var request = URLRequest(url: url, timeoutInterval: 30)
+        request.httpMethod = method
+        for (key, value) in headers {
+            request.setValue(value, forHTTPHeaderField: key)
+        }
+        if let multipart = multipart {
+            let boundary = UUID().uuidString
+            var body = Data()
+            func addString(_ string: String) {
+                guard let data = string.data(using: .utf8) else { return }
+                body.append(data)
+            }
+            if let json = json,
+               !json.isEmpty,
+               let jsonData = try? JSONSerialization.data(withJSONObject: json, options: .prettyPrinted) {
+                body.addMultiPart(boundary: boundary, name: "payload_json", contentType: "application/json", data: jsonData)
+            }
+            for (index, item) in multipart.enumerated() {
+                if item.keys.count != 1 { continue }
+                let contentType = item.keys.first!
+                let components = contentType.split(separator: "/")
+                guard components.count == 2 else { continue }
+                let fileType = components.last!
+                let name = components.first!
+                let data = item[contentType]!
+                body.addMultiPart(boundary: boundary, name: "\(name)\(index)", filename: "\(name)\(index).\(fileType)", contentType: "\(name)/\(fileType)", data: data)
+            }
+            body.addMultiPartEnd(boundary: boundary)
+            request.httpBody = body as Data
+            request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        } else if let json = json,
+                  !json.isEmpty,
+                  let jsonData = try? JSONSerialization.data(withJSONObject: json, options: .prettyPrinted) {
+           request.httpBody = jsonData
+           request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        } else if let form = form {
+            request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+            guard let bodyString = form.map({ "\($0.key)=\($0.value)" }).joined(separator: "&").addingPercentEncoding(withAllowedCharacters: .urlHostAllowed) else {
+                return completion(false, nil, nil, nil)
+            }
+            request.httpBody = bodyString.data(using: .utf8)
+        }
+        Self.request(request: request, type: type, cache: cache, completion)
     }
     
     class public func request<T: Any>(url: String?, type: T.Type, method: String = "GET", headers: [String: String] = [:], json: [String: AnyHashable?]? = nil, multipart: [[String: Data]]? = nil, form: [String: AnyHashable]? = nil, cache: CacheConfig = .init(), _ completion: @escaping Response<T>) {
