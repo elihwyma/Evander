@@ -1,14 +1,12 @@
 //  Created by Andromeda on 01/10/2021.
 //
 
+#if canImport(UIKit)
+
 import UIKit
 
 public extension UIView {
-    
-    class func fromNib<T: UIView>() -> T {
-        Bundle(for: T.self).loadNibNamed(String(describing: T.self), owner: nil, options: nil)![0] as! T
-    }
-    
+
     var parentView: UIViewController? {
         var parentResponder: UIResponder? = self
         while parentResponder != nil {
@@ -58,3 +56,5 @@ public extension UIView {
     }
 
 }
+
+#endif

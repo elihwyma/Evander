@@ -1,6 +1,8 @@
 //  Created by Andromeda on 01/10/2021.
 //
 
+#if canImport(UIKit)
+
 import UIKit
 
 public extension UIImage {
@@ -18,11 +20,7 @@ public extension UIImage {
             draw(in: CGRect(origin: .zero, size: size))
         }
     }
-    
-    func prepareForDisplay() -> UIImage {
-        ImageProcessing.downsample(image: self) ?? self
-    }
-        
+
     convenience init?(systemNameOrNil name: String) {
         if #available(iOS 13.0, *) {
             self.init(systemName: name)
@@ -31,3 +29,5 @@ public extension UIImage {
         }
     }
 }
+
+#endif

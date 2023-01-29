@@ -6,7 +6,7 @@ import Foundation
 public final class Evander {
     
     public class func prepare() {
-        EvanderNetworking.setupCache()
+        
     }
     
 }

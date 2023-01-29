@@ -1,6 +1,7 @@
 //  Created by Andromeda on 01/10/2021.
 //
 
+#if canImport(UIKit)
 import UIKit
 
 public extension UIColor {
@@ -52,3 +53,4 @@ public extension UIColor {
     }
     
 }
+#endif

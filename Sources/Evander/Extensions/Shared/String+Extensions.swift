@@ -4,9 +4,21 @@
 import Foundation
 
 public extension String {
+    
     var toBase64: String {
-        Data(self.utf8).base64EncodedString().replacingOccurrences(of: "/", with: "").replacingOccurrences(of: "=", with: "")
+        Data(self.utf8).base64EncodedString()
     }
+    
+    var toBase64URL: String {
+        var base64 = toBase64
+            .replacingOccurrences(of: "-", with: "+")
+            .replacingOccurrences(of: "_", with: "/")
+        if base64.count % 4 != 0 {
+            base64.append(String(repeating: "=", count: 4 - base64.count % 4))
+        }
+        return base64
+    }
+    
 }
 
 extension String: LocalizedError {
