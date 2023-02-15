@@ -54,7 +54,7 @@ final public class NetworkSession {
         }.resume()
     }
 
-    public func request<T: Decodable>(request: NetworkRequest, type: T, completion: @escaping (NetworkCodableResponse<T>) -> Void) {
+    public func request<T: Decodable>(request: NetworkRequest, type: T.Type, completion: @escaping (NetworkCodableResponse<T>) -> Void) {
         session.dataTask(with: request.request) { data, response, error in
             if let error = error {
                 return completion(.init(status: 500, success: false, error: error, data: nil))
@@ -154,7 +154,7 @@ public extension NetworkSession {
         }
     }
     
-    func request<T: Decodable>(request: NetworkRequest, type: T) async throws -> NetworkCodableResponse<T> {
+    func request<T: Decodable>(request: NetworkRequest, type: T.Type) async throws -> NetworkCodableResponse<T> {
         try await withCheckedThrowingContinuation { continuation in
             self.request(request: request, type: type) { response in
                 if let error = response.error {
