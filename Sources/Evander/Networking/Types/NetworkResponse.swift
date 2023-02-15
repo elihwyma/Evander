@@ -22,13 +22,13 @@ public struct NetworkJSONResponse: NetworkResponse {
         self.json = json
     }
     
-    let status: Int
+    public let status: Int
     
-    let success: Bool
+    public let success: Bool
     
-    let error: Error?
+    public let error: Error?
     
-    let json: [String: AnyHashable?]?
+    public let json: [String: AnyHashable?]?
     
 }
 
@@ -41,13 +41,13 @@ public struct NetworkCodableResponse<T: Decodable>: NetworkResponse {
         self.data = data
     }
     
-    let status: Int
+    public let status: Int
     
-    let success: Bool
+    public let success: Bool
     
-    let error: Error?
+    public let error: Error?
     
-    let data: T?
+    public let data: T?
     
 }
 
