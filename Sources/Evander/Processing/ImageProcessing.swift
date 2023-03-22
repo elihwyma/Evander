@@ -68,7 +68,7 @@ final public class ImageProcessing {
     }
     
 }
-
+#if SWIFT_CONCURRENCY
 @available(iOS 13, macOS 10.15, watchOS 5, tvOS 13, *)
 public extension ImageProcessing {
 
@@ -85,7 +85,7 @@ public extension ImageProcessing {
         return downsample(source: imageSource, size: size, scale: scale)
     }
 }
-
+#endif
 final public class EvanderGIF: Image {
     
     public var calculatedDuration: Double!

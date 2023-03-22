@@ -139,6 +139,7 @@ final public class NetworkSession {
     
 }
 
+#if SWIFT_CONCURRENCY
 @available(iOS 13, macOS 10.15, watchOS 5, tvOS 13, *)
 public extension NetworkSession {
     
@@ -218,3 +219,4 @@ public extension NetworkSession {
     }
     
 }
+#endif
