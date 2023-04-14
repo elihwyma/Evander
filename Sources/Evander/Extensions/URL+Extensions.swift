@@ -2,56 +2,58 @@
 //
 
 import Foundation
+import Darwin
 
 public extension URL {
-    var attributes: [FileAttributeKey: Any]? {
-        do {
-            return try FileManager.default.attributesOfItem(atPath: path)
-        } catch let error as NSError {
-            print("FileAttribute error: \(error)")
-        }
-        return nil
-    }
-
-    var size: UInt64 {
-        attributes?[.size] as? UInt64 ?? UInt64(0)
+    
+    private static let S_IFLNK: Int = 0o120000
+    private static let S_IFMT : Int = 0o170000
+    private static let S_IFDIR: Int = 0o040000
+    
+    var size: Int64 {
+        var sb = stat()
+        return stat(path, &sb) == 0 ? sb.st_size : 0
     }
 
     var fileSizeString: String {
-        ByteCountFormatter.string(fromByteCount: Int64(size), countStyle: .file)
+        ByteCountFormatter.string(fromByteCount: size, countStyle: .file)
     }
 
     var creationDate: Date? {
-        attributes?[.creationDate] as? Date
+        var sb = stat()
+        return stat(path, &sb) == 0 ? Date(timespec: sb.st_birthtimespec) : nil
     }
     
     var modificationDate: Date? {
-        attributes?[.modificationDate] as? Date
+        var sb = stat()
+        return stat(path, &sb) == 0 ? Date(timespec: sb.st_mtimespec) : nil
+    }
+    
+    var statusDate: Date? {
+        var sb = stat()
+        return stat(path, &sb) == 0 ? Date(timespec: sb.st_ctimespec) : nil
     }
     
     var symlink: Bool {
-        if let type = attributes?[.type] as? FileAttributeType {
-            return type == .typeSymbolicLink
-        }
-        return false
+        var sb = stat()
+        return stat(path, &sb) == 0 && (Int(sb.st_mode) & Self.S_IFMT) == Self.S_IFLNK
     }
     
     var exists: Bool {
-        FileManager.default.fileExists(atPath: path)
+        access(path, F_OK) == 0
     }
-
+    
     var dirExists: Bool {
-        var isDirectory: ObjCBool = false
-        let exists = FileManager.default.fileExists(atPath: path, isDirectory: &isDirectory)
-        return exists && isDirectory.boolValue
+        var sb = stat()
+        return stat(path, &sb) == 0 && (Int(sb.st_mode) & Self.S_IFMT) == Self.S_IFDIR
     }
 
     func contents() throws -> [URL] {
         try FileManager.default.contentsOfDirectory(at: self, includingPropertiesForKeys: nil)
     }
+    
 
     var implicitContents: [URL] {
         (try? contents()) ?? []
     }
 }
-

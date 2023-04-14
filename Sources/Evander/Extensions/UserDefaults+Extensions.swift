@@ -1,11 +1,19 @@
 //  Created by Andromeda on 01/10/2021.
 //
 
+#if canImport(UIKit)
 import UIKit
+
+public typealias Color = UIColor
+#else
+
+import AppKit
+public typealias Color = NSColor
+#endif
 
 public extension UserDefaults {
     
-    func set(_ color: UIColor?, forKey defaultName: String) {
+    func set(_ color: Color?, forKey defaultName: String) {
         guard let data = color?.data else {
             removeObject(forKey: defaultName)
             return
@@ -13,11 +21,11 @@ public extension UserDefaults {
         set(data, forKey: defaultName)
     }
     
-    func color(forKey defaultName: String) -> UIColor? {
+    func color(forKey defaultName: String) -> Color? {
         data(forKey: defaultName)?.color
     }
     
-    func optionalBool(_ key: String, fallback: Bool = false) -> Bool {
+    func bool(forKey key: String, fallback: Bool = false) -> Bool {
         self.object(forKey: key) as? Bool ?? fallback
     }
     
@@ -37,10 +45,10 @@ public extension Numeric {
 
 public extension Data {
     func object<T>() -> T { withUnsafeBytes{$0.load(as: T.self)} }
-    var color: UIColor { .init(data: self) }
+    var color: Color { .init(data: self) }
 }
 
-public extension UIColor {
+public extension Color {
     convenience init(data: Data) {
         let size = MemoryLayout<CGFloat>.size
         self.init(red:   data.subdata(in: size*0..<size*1).object(),
@@ -50,8 +58,8 @@ public extension UIColor {
     }
     var rgba: (red: CGFloat, green: CGFloat, blue: CGFloat, alpha: CGFloat)? {
         var (red, green, blue, alpha): (CGFloat, CGFloat, CGFloat, CGFloat) = (0, 0, 0, 0)
-        return getRed(&red, green: &green, blue: &blue, alpha: &alpha) ?
-        (red, green, blue, alpha) : nil
+        getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+        return (red, green, blue, alpha)
     }
     var data: Data? {
         guard let rgba = rgba else { return nil }

@@ -77,12 +77,14 @@ final public class EvanderNetworking {
     }
 
     
-    public class func clearCache() {
+    public class func clearCache(fix: Bool = true) {
         try? FileManager.default.removeItem(at: downloadCache)
         try? FileManager.default.removeItem(at: networkCache)
         try? FileManager.default.removeItem(at: mediaCache)
         try? FileManager.default.removeItem(at: localeCache)
-        setupCache()
+        if fix {
+            setupCache()
+        }
     }
     
     private class func validateManifest() -> Bool {
@@ -127,8 +129,7 @@ final public class EvanderNetworking {
         }
         cleanup()
         if !validateManifest() {
-            clearCache()
-            return
+            clearCache(fix: false)
         }
         check([
             _cacheDirectory,
@@ -167,7 +168,7 @@ final public class EvanderNetworking {
     }
 
     class private func skipNetwork(_ url: URL) -> Bool {
-        if let date = url.attributes?[.modificationDate] as? Date {
+        if let date = url.modificationDate {
             var yes = DateComponents()
             yes.day = -1
             let yesterday = Calendar.current.date(byAdding: yes, to: Date()) ?? Date()
