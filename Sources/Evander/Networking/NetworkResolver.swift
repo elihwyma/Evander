@@ -24,18 +24,6 @@ final public class EvanderNetworking {
     public static var networkCache: URL {
         _cacheDirectory.appendingPathComponent("Networking")
     }
-    
-    public static var mediaCache: URL {
-        _cacheDirectory.appendingPathComponent("Media")
-    }
-    
-    public static var localeCache: URL {
-        _cacheDirectory.appendingPathComponent("Locale")
-    }
-    
-    private static var manifest: URL {
-        _cacheDirectory.appendingPathComponent(".MANIFEST")
-    }
 
     private class Callback: NSObject {
         private static let callbackQueue: DispatchQueue = {
@@ -80,38 +68,11 @@ final public class EvanderNetworking {
     public class func clearCache(fix: Bool = true) {
         try? FileManager.default.removeItem(at: downloadCache)
         try? FileManager.default.removeItem(at: networkCache)
-        try? FileManager.default.removeItem(at: mediaCache)
-        try? FileManager.default.removeItem(at: localeCache)
         if fix {
             setupCache()
         }
     }
-    
-    private class func validateManifest() -> Bool {
-        if manifest.exists,
-            let text = try? String(contentsOf: manifest),
-            text == MANIFEST_VERSION {
-            return true
-        }
-        if !_cacheDirectory.dirExists {
-            do {
-                try FileManager.default.createDirectory(atPath: _cacheDirectory.path, withIntermediateDirectories: true, attributes: nil)
-            } catch {
-                print("Failed to create cache directory \(error.localizedDescription)")
-            }
-        }
-        try? MANIFEST_VERSION.write(to: manifest, atomically: false, encoding: .utf8)
-        return false
-    }
-    
-    private class func cleanup() {
-        if manifest.exists {
-            return
-        }
-        try? FileManager.default.removeItem(at: _cacheDirectory)
-        
-    }
-    
+
     public class func setupCache() {
         func create(_ url: URL) {
             do {
@@ -127,20 +88,13 @@ final public class EvanderNetworking {
                 }
             }
         }
-        cleanup()
-        if !validateManifest() {
-            clearCache(fix: false)
-        }
         check([
             _cacheDirectory,
             downloadCache,
-            networkCache,
-            mediaCache,
-            localeCache
+            networkCache
         ])        
         DispatchQueue.global(qos: .utility).async { [self] in
             var combined = [URL]()
-            combined += mediaCache.implicitContents
             combined += networkCache.implicitContents
             for content in combined {
                 guard let attr = try? FileManager.default.attributesOfItem(atPath: content.path),
@@ -446,7 +400,7 @@ final public class EvanderNetworking {
                 }
                 return nil
             }
-            let path = mediaCache.appendingPathComponent("\(encoded).png")
+            let path = networkCache.appendingPathComponent("\(encoded).png")
             if path.exists,
                let image = ImageProcessing.downsample(url: path, to: size, scale: scale) {
                 if cache.localCache || cache.skipNetwork {
@@ -569,7 +523,7 @@ final public class EvanderNetworking {
            let image = memoryCache.object(forKey: ImageObject(url: encoded, size: size)) {
             return image
         }
-        let path = mediaCache.appendingPathComponent("\(encoded).gif")
+        let path = networkCache.appendingPathComponent("\(encoded).gif")
         if path.exists {
             if let data = try? Data(contentsOf: path) {
                 if let image = EvanderGIF(data: data, size: size, scale: scale) {
@@ -599,8 +553,8 @@ final public class EvanderNetworking {
                 if cache {
                     memoryCache.setObject(image, forKey: ImageObject(url: encoded, size: size))
                     do {
-                        if !mediaCache.dirExists {
-                            try FileManager.default.createDirectory(at: mediaCache, withIntermediateDirectories: true)
+                        if !networkCache.dirExists {
+                            try FileManager.default.createDirectory(at: networkCache, withIntermediateDirectories: true)
                         }
                         try data.write(to: path, options: .atomic)
                     } catch {
@@ -618,7 +572,7 @@ final public class EvanderNetworking {
             return
         }
         let encoded = url.absoluteString.toBase64
-        let path = mediaCache.appendingPathComponent("\(encoded).png")
+        let path = networkCache.appendingPathComponent("\(encoded).png")
         do {
             try data.write(to: path, options: .atomic)
         } catch {
@@ -631,7 +585,7 @@ final public class EvanderNetworking {
             return (true, nil)
         }
         let encoded = url.absoluteString.toBase64
-        let path = mediaCache.appendingPathComponent("\(encoded).png")
+        let path = networkCache.appendingPathComponent("\(encoded).png")
         if let memory = memoryCache.object(forKey: ImageObject(url: encoded, size: size)) {
             return (!Self.skipNetwork(path), memory)
         }
