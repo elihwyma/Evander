@@ -96,11 +96,12 @@ final public class EvanderNetworking {
         DispatchQueue.global(qos: .utility).async { [self] in
             var combined = [URL]()
             combined += networkCache.implicitContents
+            let sevenDaysOld = Date(timeIntervalSinceNow: -2592000)
             for content in combined {
-                guard let attr = try? FileManager.default.attributesOfItem(atPath: content.path),
-                      let date = attr[FileAttributeKey.modificationDate] as? Date else { continue }
-                if Date(timeIntervalSince1970: Date().timeIntervalSince1970 - 2592000) > date {
-                    try? FileManager.default.removeItem(atPath: content.path)
+                if let modDate = content.modificationDate {
+                    if sevenDaysOld < modDate {
+                        try? FileManager.default.removeItem(at: content)
+                    }
                 }
             }
             if let contents = try? self.downloadCache.contents() {
